@@ -1,0 +1,2153 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="MPT Portefølje">
+  <title>MPT - Efficient Frontier, Begrænsninger & Egen Portefølje</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f3b5c'/%3E%3Cpath d='M12 48 L52 14' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' opacity='0.6'/%3E%3Cpath d='M22 46 Q20 26 50 18' fill='none' stroke='%23f5b82e' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='30' cy='29' r='5' fill='%23e03131' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='36' fill='%231f3b5c'/%3E%3Cpath d='M32 138 L148 38' stroke='%23ffffff' stroke-width='7' stroke-linecap='round' opacity='0.55'/%3E%3Cpath d='M60 132 Q54 74 144 50' fill='none' stroke='%23f5b82e' stroke-width='10' stroke-linecap='round'/%3E%3Ccircle cx='84' cy='83' r='13' fill='%23e03131' stroke='%23fff' stroke-width='4'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --navy: #1f3b5c;
+      --navy-dark: #152940;
+      --blue: #0072bd;
+      --blue-soft: #e8f1fa;
+      --red: #d62728;
+      --gold: #d49b1a;
+      --green: #0a7a33;
+      --bg: #f3f5f8;
+      --card: #ffffff;
+      --border: #d5dce4;
+      --text: #1c2430;
+      --muted: #5a6778;
+      --radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    /* --- Topbar --- */
+    .topbar {
+      background: var(--navy);
+      color: #fff;
+      padding: 12px 18px;
+      padding-top: max(12px, env(safe-area-inset-top));
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .topbar h1 {
+      margin: 0;
+      font-size: 1.08rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .topbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      padding: 8px 13px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.05s ease, border-color 0.15s ease;
+      min-height: 38px;
+      touch-action: manipulation;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: var(--navy);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--navy-dark);
+    }
+
+    .btn-top {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.24);
+      padding: 7px 12px;
+      font-size: 0.85rem;
+    }
+    .btn-top:hover {
+      background: rgba(255, 255, 255, 0.24);
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--navy);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover {
+      background: #f0f4f8;
+    }
+
+    /* --- Main Grid --- */
+    .app-container {
+      max-width: 1520px;
+      margin: 0 auto;
+      padding: 14px;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: 510px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    @media (max-width: 1120px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .col-left, .col-right {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 13px 14px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+
+    .card-title {
+      margin: 0 0 10px 0;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .card-subtitle {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    /* --- Form Controls --- */
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 9px;
+    }
+
+    .form-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .field-inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .field-grow {
+      flex: 1 1 200px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    input[type="text"],
+    select {
+      font-family: inherit;
+      font-size: 15px; /* Forebygger uønsket iPad Safari auto-zoom */
+      padding: 6px 8px;
+      border: 1px solid #c3cdd8;
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      min-height: 35px;
+      width: 100%;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px rgba(0, 114, 189, 0.16);
+    }
+
+    input:disabled {
+      background: #f1f4f8;
+      color: #7c8794;
+      border-color: #e0e5ec;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .check-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--navy);
+      margin: 0;
+    }
+
+    /* --- Input Tables --- */
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table.input-grid {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 440px;
+    }
+
+    table.input-grid th {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--muted);
+      padding: 0 3px 6px 3px;
+      text-align: right;
+    }
+
+    table.input-grid th:nth-child(1),
+    table.input-grid th:nth-child(2) {
+      text-align: left;
+    }
+
+    table.input-grid td {
+      padding: 3px 2px;
+      vertical-align: middle;
+    }
+
+    table.input-grid td.row-tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      width: 24px;
+    }
+
+    table.input-grid input.num {
+      text-align: right;
+      padding: 5px 6px;
+    }
+
+    table.input-grid tr.inactive-row td.row-tag {
+      color: #b2bcc7;
+    }
+
+    .sum-status {
+      margin-top: 8px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 5px 8px;
+      border-radius: 6px;
+    }
+    .sum-ok {
+      color: var(--green);
+      background: #eaf7ee;
+    }
+    .sum-bad {
+      color: #b42318;
+      background: #fdecec;
+    }
+
+    /* --- Correlation Table --- */
+    table.corr-grid {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 390px;
+    }
+
+    table.corr-grid th {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--navy);
+      padding: 3px 2px;
+      text-align: center;
+      max-width: 72px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    table.corr-grid th.row-head {
+      text-align: right;
+      padding-right: 6px;
+      width: 74px;
+    }
+
+    table.corr-grid td {
+      padding: 2px;
+    }
+
+    table.corr-grid input {
+      text-align: center;
+      padding: 5px 4px;
+      font-size: 14px;
+    }
+
+    table.corr-grid input.diag {
+      background: var(--blue-soft);
+      color: var(--navy);
+      font-weight: 700;
+    }
+
+    .inactive-label {
+      color: #b2bcc7 !important;
+    }
+
+    /* --- Action Bar --- */
+    .action-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .action-row-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .error-banner {
+      display: none;
+      background: #fdecec;
+      border: 1px solid #f5b5b5;
+      color: #9b1c1c;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    /* --- Chart Card --- */
+    .chart-wrapper {
+      width: 100%;
+      background: #fff;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .chart-wrapper svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .inspector-bar {
+      margin-top: 8px;
+      padding: 8px 11px;
+      border-radius: 7px;
+      background: #f5f8fc;
+      border: 1px solid #dce5f0;
+      font-size: 0.83rem;
+      color: var(--navy);
+      min-height: 36px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .inspector-muted {
+      color: var(--muted);
+    }
+
+    /* --- Comparison Results Table --- */
+    table.results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    table.results-table th,
+    table.results-table td {
+      padding: 7px 10px;
+      border: 1px solid #dce2ea;
+      text-align: right;
+    }
+
+    table.results-table th:first-child,
+    table.results-table td:first-child {
+      text-align: left;
+    }
+
+    table.results-table thead th {
+      background: var(--navy);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.83rem;
+    }
+
+    table.results-table tbody tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    table.results-table tbody tr.hl-row {
+      background: var(--blue-soft);
+      font-weight: 700;
+      color: var(--navy-dark);
+    }
+
+    table.results-table tbody tr.section-sep td {
+      border-top: 2px solid #b8c5d6;
+    }
+
+    .formula-note {
+      margin-top: 8px;
+      font-size: 0.77rem;
+      color: var(--muted);
+    }
+
+    /* --- Print-only A4 Report --- */
+    #print-report {
+      display: none;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 10mm 11mm;
+    }
+
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      body {
+        background: #fff !important;
+      }
+
+      #screen-app {
+        display: none !important;
+      }
+
+      #print-report {
+        display: block !important;
+        width: 100%;
+        color: #1c2430;
+      }
+
+      .pr-header {
+        border-bottom: 1.8px solid var(--navy);
+        padding-bottom: 6px;
+        margin-bottom: 10px;
+      }
+
+      .pr-title {
+        margin: 0;
+        font-size: 16pt;
+        font-weight: 700;
+        color: var(--navy);
+      }
+
+      .pr-meta {
+        margin: 3px 0 0 0;
+        font-size: 8.5pt;
+        color: #4a5568;
+      }
+
+      .pr-chart {
+        margin: 6px 0 10px 0;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        padding: 4px;
+      }
+
+      .pr-chart svg {
+        display: block;
+        width: 100%;
+        max-height: 92mm;
+        height: auto;
+      }
+
+      .pr-mid-grid {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .pr-sec-title {
+        margin: 0 0 4px 0;
+        font-size: 9.5pt;
+        font-weight: 700;
+        color: var(--navy);
+      }
+
+      table.pr-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 7.8pt;
+      }
+
+      table.pr-table th,
+      table.pr-table td {
+        border: 0.6px solid #cfd6de;
+        padding: 3.2px 5px;
+        text-align: center;
+      }
+
+      table.pr-table thead th {
+        background: var(--navy);
+        color: #fff;
+        font-weight: 700;
+      }
+
+      table.pr-table td.left {
+        text-align: left;
+      }
+
+      table.pr-table tr:nth-child(even) td {
+        background: #f7f9fb;
+      }
+
+      table.pr-table tr.hl td {
+        background: #e8f1fa;
+        font-weight: 700;
+      }
+
+      table.pr-table td.corr-head {
+        background: #eef2f6;
+        font-weight: 700;
+      }
+
+      table.pr-table td.corr-diag {
+        background: #e8f1fa;
+        font-weight: 700;
+      }
+
+      .pr-footer {
+        margin-top: 8px;
+        font-size: 7.3pt;
+        color: #718096;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="screen-app">
+  <header class="topbar">
+    <h1>MPT — Efficient Frontier, Begrænsninger & Egen Portefølje</h1>
+    <div class="topbar-actions">
+      <button type="button" class="btn-top" id="btnTopSave">Gem scenarie</button>
+      <button type="button" class="btn-top" id="btnTopLoad">Hent scenarie</button>
+      <button type="button" class="btn-top" id="btnTopPdf">Udskriv / PDF</button>
+      <button type="button" class="btn-top" id="btnReset">Standardtal</button>
+    </div>
+  </header>
+
+  <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
+
+  <main class="app-container">
+    <!-- VENSTRE KOLONNE: Inddata -->
+    <section class="col-left">
+      <div id="errorBanner" class="error-banner"></div>
+
+      <!-- 1. Indstillinger -->
+      <div class="card">
+        <h2 class="card-title">Indstillinger</h2>
+        <div class="form-row">
+          <div class="field-inline field-grow">
+            <label for="scenarioName" style="white-space:nowrap;">Scenarienavn:</label>
+            <input type="text" id="scenarioName" value="30-20-20-15-15 Konservativ">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field-inline">
+            <label for="numAssets">Antal aktiver:</label>
+            <select id="numAssets" style="width:68px;">
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5" selected>5</option>
+            </select>
+          </div>
+          <div class="field-inline">
+            <label for="rfInput">Risk-free rate (%):</label>
+            <input type="text" id="rfInput" value="3,5" style="width:78px; text-align:right;">
+          </div>
+        </div>
+        <label class="check-row">
+          <input type="checkbox" id="allowShort">
+          <span>Tillad shorting (ignorerer min-/maks.-vægte)</span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="showCustom" checked>
+          <span>Vis egen portefølje på graf og i resultater</span>
+        </label>
+      </div>
+
+      <!-- 2. Aktiver -->
+      <div class="card">
+        <h2 class="card-title">
+          <span>Aktiver, vægtbegrænsninger & egen portefølje (%)</span>
+        </h2>
+        <div class="table-scroll">
+          <table class="input-grid">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th style="width:115px;">Aktivnavn</th>
+                <th>Afkast %</th>
+                <th>Std %</th>
+                <th>Min %</th>
+                <th>Maks %</th>
+                <th>Egen %</th>
+              </tr>
+            </thead>
+            <tbody id="assetTableBody"></tbody>
+          </table>
+        </div>
+        <div id="customSumStatus" class="sum-status sum-ok">Sum egen portefølje: 100,0 %</div>
+      </div>
+
+      <!-- 3. Korrelationsmatrix -->
+      <div class="card">
+        <h2 class="card-title">
+          <span>Korrelationsmatrix</span>
+          <span class="card-subtitle">-1 til 1 (øvre trekant spejles automatisk)</span>
+        </h2>
+        <div class="table-scroll">
+          <table class="corr-grid" id="corrTable"></table>
+        </div>
+      </div>
+
+      <!-- 4. Knapper -->
+      <div class="card action-stack">
+        <button type="button" class="btn-primary" id="btnCalc">Beregn & Optegn</button>
+        <div class="action-row-3">
+          <button type="button" class="btn-secondary" id="btnSave">Gem (.json)</button>
+          <button type="button" class="btn-secondary" id="btnLoad">Hent (.json)</button>
+          <button type="button" class="btn-secondary" id="btnPdf">Udskriv PDF</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- HØJRE KOLONNE: Graf & Resultater -->
+    <section class="col-right">
+      <div class="card">
+        <h2 class="card-title">
+          <span>Efficient Frontier & Capital Allocation Line</span>
+          <span class="card-subtitle" id="chartScenarioBadge"></span>
+        </h2>
+        <div class="chart-wrapper" id="chartContainer"></div>
+        <div class="inspector-bar" id="inspectorBar">
+          <span class="inspector-muted">Tryk på et punkt på kurven eller et aktiv for at aflæse vægte og nøgletal.</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Beregnede porteføljer & optimale vægte</h2>
+        <div class="table-scroll">
+          <table class="results-table" id="resultsTable"></table>
+        </div>
+        <div class="formula-note">
+          CAGR (geometrisk afkast) ≈ μ − ½σ²  | 
+          Rebalanceringsbonus ≈ ½(Σw<sub>i</sub>σ<sub>i</sub>² − σ<sub>p</sub>²).
+          Accepterer både komma og punktum i talfelter.
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Dedikeret A4 PDF-rapport (vises kun ved udskrivning / Gem som PDF) -->
+<div id="print-report"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const MAX_ASSETS = 5;
+  const STORAGE_KEY = "mpt_efficient_frontier_state_v3";
+
+  const DEFAULT_STATE = {
+    scenario_name: "30-20-20-15-15 Konservativ",
+    num_assets: 5,
+    rf: "3,5",
+    allow_short: false,
+    show_custom: true,
+    assets: [
+      { name: "Aktier",    ret: "9,5", std: "13,98", min_w: "0", max_w: "60", custom_w: "30" },
+      { name: "CAT-bonds", ret: "6,5", std: "9,0",   min_w: "0", max_w: "25", custom_w: "20" },
+      { name: "DBMF",      ret: "7,0", std: "10,45", min_w: "0", max_w: "25", custom_w: "20" },
+      { name: "Guld",      ret: "6,5", std: "16,97", min_w: "0", max_w: "25", custom_w: "15" },
+      { name: "TLT",       ret: "5,0", std: "13,42", min_w: "0", max_w: "25", custom_w: "15" }
+    ],
+    corr_matrix: [
+      ["1.00",   "0,174",  "0,002",  "0,108", "-0,125"],
+      ["0,174",  "1.00",   "-0,072", "0,078", "0,115"],
+      ["0,002",  "-0,072", "1.00",   "0,215", "0,104"],
+      ["0,108",  "0,078",  "0,215",  "1.00",  "0,230"],
+      ["-0,125", "0,115",  "0,104",  "0,230", "1.00"]
+    ]
+  };
+
+  let lastResults = null;
+
+  // --- Hjælpefunktioner ---
+  function parseNum(str) {
+    const cleaned = String(str ?? "").trim().replace(",", ".");
+    if (cleaned === "") return NaN;
+    const val = Number(cleaned);
+    return Number.isFinite(val) ? val : NaN;
+  }
+
+  function fmt(val, dec = 2) {
+    return Number(val).toFixed(dec);
+  }
+
+  function fmtSigned(val, dec = 2) {
+    const sign = val >= 0 ? "+" : "";
+    return sign + Number(val).toFixed(dec);
+  }
+
+  function fmtBonus(val) {
+    if (val === null || val === undefined || !Number.isFinite(val)) return "-";
+    return fmtSigned(val * 100, 2) + " %";
+  }
+
+  function sanitizeFilename(name) {
+    const cleaned = String(name || "").trim().replace(/[\\/*?:"<>|]+/g, "_");
+    return cleaned || "MPT_Portefoelje";
+  }
+
+function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "\u0026amp;")
+      .replace(/</g, "\u0026lt;")
+      .replace(/>/g, "\u0026gt;")
+      .replace(/"/g, "\u0026quot;");
+  }
+
+  function dot(a, b) {
+    let s = 0;
+    for (let i = 0; i < a.length; i++) s += a[i] * b[i];
+    return s;
+  }
+
+  function quadForm(w, M) {
+    let s = 0;
+    const n = w.length;
+    for (let i = 0; i < n; i++) {
+      let rowSum = 0;
+      const Mi = M[i];
+      for (let j = 0; j < n; j++) rowSum += Mi[j] * w[j];
+      s += w[i] * rowSum;
+    }
+    return s;
+  }
+
+  // --- Lineær algebra (Gaussian elimination + Jacobi egenværdier) ---
+  function solveLinearSystem(A, b) {
+    const n = b.length;
+    const M = A.map((row, i) => [...row, b[i]]);
+
+    for (let col = 0; col < n; col++) {
+      let pivotRow = col;
+      let maxAbs = Math.abs(M[col][col]);
+      for (let r = col + 1; r < n; r++) {
+        const v = Math.abs(M[r][col]);
+        if (v > maxAbs) {
+          maxAbs = v;
+          pivotRow = r;
+        }
+      }
+      if (maxAbs < 1e-12) return null;
+
+      if (pivotRow !== col) {
+        const tmp = M[col];
+        M[col] = M[pivotRow];
+        M[pivotRow] = tmp;
+      }
+
+      const piv = M[col][col];
+      for (let r = col + 1; r < n; r++) {
+        const factor = M[r][col] / piv;
+        if (factor === 0) continue;
+        for (let c = col; c <= n; c++) {
+          M[r][c] -= factor * M[col][c];
+        }
+      }
+    }
+
+    const x = new Array(n).fill(0);
+    for (let i = n - 1; i >= 0; i--) {
+      let sum = M[i][n];
+      for (let j = i + 1; j < n; j++) sum -= M[i][j] * x[j];
+      x[i] = sum / M[i][i];
+      if (!Number.isFinite(x[i])) return null;
+    }
+    return x;
+  }
+
+  function symmetricEigenvalues(mat) {
+    const n = mat.length;
+    const A = mat.map(r => [...r]);
+    for (let iter = 0; iter < 60; iter++) {
+      let p = 0, q = 1, maxOff = 0;
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const v = Math.abs(A[i][j]);
+          if (v > maxOff) {
+            maxOff = v;
+            p = i;
+            q = j;
+          }
+        }
+      }
+      if (maxOff < 1e-12) break;
+
+      const app = A[p][p], aqq = A[q][q], apq = A[p][q];
+      const tau = (aqq - app) / (2 * apq);
+      const t = tau >= 0
+        ? 1 / (tau + Math.sqrt(1 + tau * tau))
+        : -1 / (-tau + Math.sqrt(1 + tau * tau));
+      const c = 1 / Math.sqrt(1 + t * t);
+      const s = t * c;
+
+      for (let i = 0; i < n; i++) {
+        if (i !== p && i !== q) {
+          const aip = A[i][p], aiq = A[i][q];
+          A[i][p] = A[p][i] = c * aip - s * aiq;
+          A[i][q] = A[q][i] = s * aip + c * aiq;
+        }
+      }
+      A[p][p] = app - t * apq;
+      A[q][q] = aqq + t * apq;
+      A[p][q] = A[q][p] = 0;
+    }
+    return A.map((r, i) => r[i]);
+  }
+
+  // --- Eksakt Box-Constrained QP via Active-Set Enumeration (n <= 5 -> max 3^5 = 243) ---
+  function solveLinearBox(mu, minW, maxW, maximize) {
+    const n = mu.length;
+    const w = [...minW];
+    let rem = 1.0 - w.reduce((a, b) => a + b, 0);
+    const order = Array.from({ length: n }, (_, i) => i).sort((a, b) =>
+      maximize ? mu[b] - mu[a] : mu[a] - mu[b]
+    );
+    for (const idx of order) {
+      if (rem <= 1e-12) break;
+      const add = Math.min(rem, maxW[idx] - w[idx]);
+      if (add > 0) {
+        w[idx] += add;
+        rem -= add;
+      }
+    }
+    return { weights: w, ret: dot(w, mu) };
+  }
+
+  function solveBoxQP(cov, mu, minW, maxW, targetRet = null) {
+    const n = mu.length;
+    const totalStates = Math.pow(3, n);
+    let bestVar = Infinity;
+    let bestW = null;
+
+    const state = new Array(n);
+    const wCand = new Array(n);
+
+    for (let mask = 0; mask < totalStates; mask++) {
+      let tmp = mask;
+      const freeIdx = [];
+      let sumFixed = 0;
+      let retFixed = 0;
+      let minFreeSum = 0;
+      let maxFreeSum = 0;
+
+      for (let i = 0; i < n; i++) {
+        const s = tmp % 3;
+        tmp = (tmp - s) / 3;
+        state[i] = s;
+        if (s === 0) {
+          freeIdx.push(i);
+          minFreeSum += minW[i];
+          maxFreeSum += maxW[i];
+        } else if (s === 1) {
+          wCand[i] = minW[i];
+          sumFixed += minW[i];
+          retFixed += minW[i] * mu[i];
+        } else {
+          wCand[i] = maxW[i];
+          sumFixed += maxW[i];
+          retFixed += maxW[i] * mu[i];
+        }
+      }
+
+      const remSum = 1.0 - sumFixed;
+      if (remSum < minFreeSum - 1e-8 || remSum > maxFreeSum + 1e-8) continue;
+
+      const k = freeIdx.length;
+      if (k === 0) {
+        if (Math.abs(remSum) > 1e-7) continue;
+        if (targetRet !== null && Math.abs(targetRet - retFixed) > 1e-7) continue;
+        const v = Math.max(quadForm(wCand, cov), 0);
+        if (v < bestVar) {
+          bestVar = v;
+          bestW = [...wCand];
+        }
+        continue;
+      }
+
+      let effM = 1;
+      const remRet = targetRet !== null ? targetRet - retFixed : 0;
+
+      if (targetRet !== null) {
+        let minMuF = Infinity, maxMuF = -Infinity;
+        for (let a = 0; a < k; a++) {
+          const val = mu[freeIdx[a]];
+          if (val < minMuF) minMuF = val;
+          if (val > maxMuF) maxMuF = val;
+        }
+        if (maxMuF - minMuF < 1e-11) {
+          // Alle frie aktiver har samme afkast -> afkastkravet er enten opfyldt eller umuligt
+          if (Math.abs(mu[freeIdx[0]] * remSum - remRet) > 1e-7) continue;
+          effM = 1;
+        } else {
+          effM = 2;
+        }
+      }
+
+      if (k < effM) continue;
+
+      let solFree = null;
+      if (k === effM) {
+        if (effM === 1) {
+          solFree = [remSum];
+        } else {
+          const m0 = mu[freeIdx[0]];
+          const m1 = mu[freeIdx[1]];
+          const det = m0 - m1;
+          if (Math.abs(det) < 1e-12) continue;
+          const w0 = (remRet - m1 * remSum) / det;
+          const w1 = remSum - w0;
+          solFree = [w0, w1];
+        }
+      } else {
+        const dim = k + effM;
+        const M = Array.from({ length: dim }, () => new Array(dim).fill(0));
+        const rhs = new Array(dim).fill(0);
+
+        for (let a = 0; a < k; a++) {
+          const ia = freeIdx[a];
+          for (let b = 0; b < k; b++) {
+            const ib = freeIdx[b];
+            M[a][b] = cov[ia][ib] + (a === b ? 1e-13 : 0);
+          }
+          M[a][k] = 1.0;
+          M[k][a] = 1.0;
+          if (effM === 2) {
+            M[a][k + 1] = mu[ia];
+            M[k + 1][a] = mu[ia];
+          }
+          let fixedGrad = 0;
+          for (let j = 0; j < n; j++) {
+            if (state[j] !== 0) fixedGrad += cov[ia][j] * wCand[j];
+          }
+          rhs[a] = -fixedGrad;
+        }
+        rhs[k] = remSum;
+        if (effM === 2) rhs[k + 1] = remRet;
+
+        const sol = solveLinearSystem(M, rhs);
+        if (!sol) continue;
+        solFree = sol.slice(0, k);
+      }
+
+      // Tjek grænser
+      let feasible = true;
+      for (let a = 0; a < k; a++) {
+        const idx = freeIdx[a];
+        const val = solFree[a];
+        if (!Number.isFinite(val) || val < minW[idx] - 1e-7 || val > maxW[idx] + 1e-7) {
+          feasible = false;
+          break;
+        }
+        wCand[idx] = Math.min(maxW[idx], Math.max(minW[idx], val));
+      }
+      if (!feasible) continue;
+
+      const sCheck = wCand.reduce((acc, v) => acc + v, 0);
+      if (Math.abs(sCheck - 1.0) > 1e-6) continue;
+      if (targetRet !== null && Math.abs(dot(wCand, mu) - targetRet) > 1e-6) continue;
+
+      const v = Math.max(quadForm(wCand, cov), 0);
+      if (v < bestVar) {
+        bestVar = v;
+        bestW = [...wCand];
+      }
+    }
+
+    return bestW;
+  }
+
+  // --- MPT Beregningsmotor ---
+  function runMPT(inp) {
+    const { n, rets: mu, stds, cov, rf, allowShort } = inp;
+    const minW = allowShort ? new Array(n).fill(-5.0) : inp.minWs;
+    const maxW = allowShort ? new Array(n).fill(5.0)  : inp.maxWs;
+    const assetVars = stds.map(s => s * s);
+
+    function portStats(w) {
+      const ret = dot(w, mu);
+      const variance = Math.max(quadForm(w, cov), 1e-16);
+      const std = Math.sqrt(variance);
+      const sharpe = (ret - rf) / std;
+      const volDrag = 0.5 * variance;
+      const cagr = ret - volDrag;
+      const rebalBonus = allowShort ? null : 0.5 * (dot(w, assetVars) - variance);
+      return { weights: w, ret, cagr, volDrag, rebalBonus, std, sharpe };
+    }
+
+    // 1. GMVP
+    const wGmvp = solveBoxQP(cov, mu, minW, maxW, null);
+    if (!wGmvp) throw new Error("Kunne ikke finde Minimum Variance Portfolio inden for grænserne.");
+    const gmvp = portStats(wGmvp);
+
+    // 2. Feasible afkastspænd
+    const minRetSol = solveLinearBox(mu, minW, maxW, false);
+    const maxRetSol = solveLinearBox(mu, minW, maxW, true);
+    const rMinFeas = minRetSol.ret;
+    const rMaxFeas = maxRetSol.ret;
+
+    // 3. Tangency Portfolio (Max Sharpe)
+    let bestTan = null;
+    function considerTan(w) {
+      if (!w) return;
+      const st = portStats(w);
+      if (!bestTan || st.sharpe > bestTan.sharpe) bestTan = st;
+    }
+
+    considerTan(wGmvp);
+    considerTan(maxRetSol.weights);
+    considerTan(minRetSol.weights);
+
+    // Tjek lukket ubegrænset løsning først (hurtig & eksakt hvis inden for grænser)
+    const excess = mu.map(r => r - rf);
+    const covReg = cov.map((row, i) => row.map((v, j) => v + (i === j ? 1e-13 : 0)));
+    const z = solveLinearSystem(covReg, excess);
+    if (z) {
+      const zSum = z.reduce((a, b) => a + b, 0);
+      if (zSum > 1e-10) {
+        const wUncon = z.map(v => v / zSum);
+        if (wUncon.every((val, i) => val >= minW[i] - 1e-7 && val <= maxW[i] + 1e-7)) {
+          considerTan(wUncon.map((val, i) => Math.min(maxW[i], Math.max(minW[i], val))));
+        }
+      }
+    }
+
+    if (rMaxFeas > rf + 1e-9) {
+      const lowR = Math.max(gmvp.ret, rf + 1e-7);
+      // Hvis shorting er slået til, kan rMaxFeas være ekstremt stort; skan både realistisk og fuldt spænd
+      const maxAssetRet = Math.max(...mu);
+      const scanRanges = allowShort
+        ? [[lowR, Math.min(rMaxFeas, Math.max(maxAssetRet * 2.5, lowR + 0.35))], [lowR, rMaxFeas]]
+        : [[lowR, rMaxFeas]];
+
+      for (const [lo, hi] of scanRanges) {
+        if (hi <= lo + 1e-10) continue;
+        const steps = 64;
+        const gridR = [];
+        let bestIdx = 0;
+        let bestGridSR = -Infinity;
+
+        for (let s = 0; s <= steps; s++) {
+          const r = lo + (hi - lo) * (s / steps);
+          gridR.push(r);
+          const w = solveBoxQP(cov, mu, minW, maxW, r);
+          if (w) {
+            const st = portStats(w);
+            considerTan(w);
+            if (st.sharpe > bestGridSR) {
+              bestGridSR = st.sharpe;
+              bestIdx = s;
+            }
+          }
+        }
+
+        // Golden-section search til ~1e-11 præcision
+        let a = gridR[Math.max(0, bestIdx - 1)];
+        let b = gridR[Math.min(steps, bestIdx + 1)];
+        const phi = (Math.sqrt(5) - 1) / 2;
+
+        function evalAt(r) {
+          const w = solveBoxQP(cov, mu, minW, maxW, r);
+          if (!w) return -Infinity;
+          const st = portStats(w);
+          considerTan(w);
+          return st.sharpe;
+        }
+
+        let c = b - phi * (b - a);
+        let d = a + phi * (b - a);
+        let fc = evalAt(c);
+        let fd = evalAt(d);
+
+        for (let iter = 0; iter < 46; iter++) {
+          if (fc > fd) {
+            b = d;
+            d = c;
+            fd = fc;
+            c = b - phi * (b - a);
+            fc = evalAt(c);
+          } else {
+            a = c;
+            c = d;
+            fc = fd;
+            d = a + phi * (b - a);
+            fd = evalAt(d);
+          }
+        }
+        evalAt(0.5 * (a + b));
+      }
+    } else {
+      // Degenereret tilfælde: alle tilladte afkast <= rf
+      const steps = 40;
+      for (let s = 0; s <= steps; s++) {
+        const r = rMinFeas + (rMaxFeas - rMinFeas) * (s / steps);
+        considerTan(solveBoxQP(cov, mu, minW, maxW, r));
+      }
+    }
+
+    if (!bestTan) throw new Error("Kunne ikke finde en optimal Tangency Portfolio.");
+    const tangency = bestTan;
+
+    // 4. Efficient Frontier (øvre + nedre gren)
+    let rPlotMin = rMinFeas;
+    let rPlotMax = rMaxFeas;
+    if (allowShort) {
+      rPlotMin = Math.max(rMinFeas, Math.min(Math.min(...mu), gmvp.ret) - 0.02);
+      rPlotMax = Math.min(rMaxFeas, Math.max(Math.max(...mu), tangency.ret) * 1.15);
+    }
+
+    function traceBranch(rStart, rEnd, count) {
+      const pts = [];
+      for (let i = 0; i < count; i++) {
+        const frac = count === 1 ? 0 : i / (count - 1);
+        const tr = rStart + (rEnd - rStart) * frac;
+        const w = solveBoxQP(cov, mu, minW, maxW, tr);
+        if (w) pts.push(portStats(w));
+      }
+      return pts;
+    }
+
+    const efUpper = traceBranch(gmvp.ret, rPlotMax, 68);
+    const efLower = traceBranch(gmvp.ret, rPlotMin, 30);
+
+    // 5. Egen portefølje
+    let custom = null;
+    if (inp.showCustom) {
+      custom = portStats(inp.customWs);
+      custom.sharpeDiff = custom.sharpe - tangency.sharpe;
+      custom.calRetSameRisk = rf + tangency.sharpe * custom.std;
+    }
+
+    return { inputs: inp, tangency, gmvp, custom, efUpper, efLower };
+  }
+
+  // --- UI Opbygning ---
+  const assetTbody = document.getElementById("assetTableBody");
+  const corrTable = document.getElementById("corrTable");
+  const assetInputs = [];
+  const corrInputs = Array.from({ length: MAX_ASSETS }, () => new Array(MAX_ASSETS));
+  const corrColHeaders = [];
+  const corrRowHeaders = [];
+
+  function buildInputTables() {
+    // Aktivtabel
+    for (let i = 0; i < MAX_ASSETS; i++) {
+      const tr = document.createElement("tr");
+      tr.id = `asset-row-${i}`;
+
+      const tdTag = document.createElement("td");
+      tdTag.className = "row-tag";
+      tdTag.textContent = `A${i + 1}`;
+      tr.appendChild(tdTag);
+
+      const cols = [
+        { key: "name",     num: false, mode: "text" },
+        { key: "ret",      num: true,  mode: "text" },      // kan være negativ
+        { key: "std",      num: true,  mode: "decimal" },
+        { key: "min_w",    num: true,  mode: "text" },
+        { key: "max_w",    num: true,  mode: "decimal" },
+        { key: "custom_w", num: true,  mode: "decimal" }
+      ];
+
+      const rowRefs = { tr };
+      for (const col of cols) {
+        const td = document.createElement("td");
+        const inp = document.createElement("input");
+        inp.type = "text";
+        inp.setAttribute("inputmode", col.mode);
+        inp.autocomplete = "off";
+        inp.spellcheck = false;
+        if (col.num) inp.className = "num";
+
+        if (col.key === "name") {
+          inp.addEventListener("input", () => {
+            updateCorrHeaders();
+            persistLocalState();
+          });
+        } else if (col.key === "custom_w") {
+          inp.addEventListener("input", () => {
+            updateCustomSum();
+            persistLocalState();
+          });
+        } else {
+          inp.addEventListener("input", persistLocalState);
+        }
+
+        inp.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") calculateAndRender();
+        });
+
+        td.appendChild(inp);
+        tr.appendChild(td);
+        rowRefs[col.key] = inp;
+      }
+
+      assetTbody.appendChild(tr);
+      assetInputs.push(rowRefs);
+    }
+
+    // Korrelationstabel
+    const thead = document.createElement("thead");
+    const htr = document.createElement("tr");
+    htr.appendChild(document.createElement("th"));
+    for (let j = 0; j < MAX_ASSETS; j++) {
+      const th = document.createElement("th");
+      th.textContent = `A${j + 1}`;
+      htr.appendChild(th);
+      corrColHeaders.push(th);
+    }
+    thead.appendChild(htr);
+    corrTable.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    for (let i = 0; i < MAX_ASSETS; i++) {
+      const tr = document.createElement("tr");
+      const rth = document.createElement("th");
+      rth.className = "row-head";
+      rth.textContent = `A${i + 1}`;
+      tr.appendChild(rth);
+      corrRowHeaders.push(rth);
+
+      for (let j = 0; j < MAX_ASSETS; j++) {
+        const td = document.createElement("td");
+        const inp = document.createElement("input");
+        inp.type = "text";
+        inp.setAttribute("inputmode", "text"); // skal tillade minus-tegn på iPad
+        inp.autocomplete = "off";
+        inp.spellcheck = false;
+
+        if (i === j) {
+          inp.value = "1.00";
+          inp.disabled = true;
+          inp.className = "diag";
+        } else if (i > j) {
+          inp.disabled = true;
+        } else {
+          inp.addEventListener("input", () => {
+            corrInputs[j][i].value = inp.value;
+            persistLocalState();
+          });
+          inp.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") calculateAndRender();
+          });
+        }
+
+        td.appendChild(inp);
+        tr.appendChild(td);
+        corrInputs[i][j] = inp;
+      }
+      tbody.appendChild(tr);
+    }
+    corrTable.appendChild(tbody);
+  }
+
+  function updateCorrHeaders() {
+    for (let i = 0; i < MAX_ASSETS; i++) {
+      const nm = assetInputs[i].name.value.trim() || `A${i + 1}`;
+      const shortNm = nm.slice(0, 8);
+      corrColHeaders[i].textContent = shortNm;
+      corrRowHeaders[i].textContent = shortNm;
+    }
+  }
+
+  function updateCustomSum() {
+    const n = Number(document.getElementById("numAssets").value);
+    const el = document.getElementById("customSumStatus");
+    let sum = 0;
+    for (let i = 0; i < n; i++) {
+      const raw = assetInputs[i].custom_w.value.trim();
+      const val = raw === "" ? 0 : parseNum(raw);
+      if (Number.isNaN(val)) {
+        el.textContent = "Sum egen portefølje: ugyldigt tal";
+        el.className = "sum-status sum-bad";
+        return;
+      }
+      sum += val;
+    }
+    const ok = Math.abs(sum - 100.0) < 0.05;
+    el.textContent = `Sum egen portefølje: ${sum.toFixed(1).replace(".", ",")} %`;
+    el.className = "sum-status " + (ok ? "sum-ok" : "sum-bad");
+  }
+
+  function updateActiveRows() {
+    const n = Number(document.getElementById("numAssets").value);
+    for (let i = 0; i < MAX_ASSETS; i++) {
+      const active = i < n;
+      assetInputs[i].tr.classList.toggle("inactive-row", !active);
+      for (const k of ["name", "ret", "std", "min_w", "max_w", "custom_w"]) {
+        assetInputs[i][k].disabled = !active;
+      }
+      corrRowHeaders[i].classList.toggle("inactive-label", !active);
+      corrColHeaders[i].classList.toggle("inactive-label", !active);
+
+      for (let j = 0; j < MAX_ASSETS; j++) {
+        if (i < n && j < n && i < j) {
+          corrInputs[i][j].disabled = false;
+        } else {
+          corrInputs[i][j].disabled = true;
+        }
+      }
+    }
+    updateCustomSum();
+  }
+
+  function getRawFormState() {
+    return {
+      scenario_name: document.getElementById("scenarioName").value.trim(),
+      num_assets: Number(document.getElementById("numAssets").value),
+      rf: document.getElementById("rfInput").value,
+      allow_short: document.getElementById("allowShort").checked,
+      show_custom: document.getElementById("showCustom").checked,
+      assets: assetInputs.map(r => ({
+        name: r.name.value,
+        ret: r.ret.value,
+        std: r.std.value,
+        min_w: r.min_w.value,
+        max_w: r.max_w.value,
+        custom_w: r.custom_w.value
+      })),
+      corr_matrix: corrInputs.map(row => row.map(inp => inp.value))
+    };
+  }
+
+  function applyFormState(data) {
+    const n = Math.min(MAX_ASSETS, Math.max(2, Number(data.num_assets || 5)));
+    document.getElementById("scenarioName").value = data.scenario_name ?? "Unavngivet scenarie";
+    document.getElementById("numAssets").value = String(n);
+    document.getElementById("rfInput").value = String(data.rf ?? "3,5");
+    document.getElementById("allowShort").checked = Boolean(data.allow_short);
+    document.getElementById("showCustom").checked = data.show_custom !== undefined ? Boolean(data.show_custom) : true;
+
+    const assets = Array.isArray(data.assets) ? data.assets : [];
+    for (let i = 0; i < MAX_ASSETS; i++) {
+      const src = assets[i] || DEFAULT_STATE.assets[i];
+      for (const k of ["name", "ret", "std", "min_w", "max_w", "custom_w"]) {
+        assetInputs[i][k].value = src[k] !== undefined ? String(src[k]) : "";
+      }
+    }
+
+    const cm = Array.isArray(data.corr_matrix) ? data.corr_matrix : DEFAULT_STATE.corr_matrix;
+    for (let i = 0; i < MAX_ASSETS; i++) {
+      for (let j = 0; j < MAX_ASSETS; j++) {
+        if (i === j) {
+          corrInputs[i][j].value = "1.00";
+        } else if (cm[i] && cm[i][j] !== undefined) {
+          corrInputs[i][j].value = String(cm[i][j]);
+        } else {
+          corrInputs[i][j].value = "0,000";
+        }
+      }
+    }
+    // Sikr symmetri fra øvre trekant
+    for (let i = 0; i < MAX_ASSETS; i++) {
+      for (let j = i + 1; j < MAX_ASSETS; j++) {
+        corrInputs[j][i].value = corrInputs[i][j].value;
+      }
+    }
+
+    updateCorrHeaders();
+    updateActiveRows();
+  }
+
+  function persistLocalState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(getRawFormState()));
+    } catch (_) {}
+  }
+
+  function readAndValidateInputs() {
+    const n = Number(document.getElementById("numAssets").value);
+    const rfVal = parseNum(document.getElementById("rfInput").value);
+    if (Number.isNaN(rfVal)) throw new Error("Risk-free rate skal være et gyldigt tal.");
+    const rf = rfVal / 100.0;
+
+    const allowShort = document.getElementById("allowShort").checked;
+    const showCustom = document.getElementById("showCustom").checked;
+    const scenarioName = document.getElementById("scenarioName").value.trim() || "Unavngivet scenarie";
+
+    const names = [], rets = [], stds = [], minWs = [], maxWs = [], customWs = [];
+    for (let i = 0; i < n; i++) {
+      const r = assetInputs[i];
+      const name = r.name.value.trim() || `Aktiv ${i + 1}`;
+      const ret = parseNum(r.ret.value) / 100.0;
+      const std = parseNum(r.std.value) / 100.0;
+      const minW = parseNum(r.min_w.value) / 100.0;
+      const maxW = parseNum(r.max_w.value) / 100.0;
+      const cRaw = r.custom_w.value.trim();
+      const customW = (cRaw === "" ? 0 : parseNum(cRaw)) / 100.0;
+
+      if ([ret, std, minW, maxW, customW].some(Number.isNaN)) {
+        throw new Error(`Ugyldig talværdi i række A${i + 1} (${name}).`);
+      }
+      if (std <= 0) {
+        throw new Error(`Standardafvigelsen for ${name} skal være større end 0.`);
+      }
+      if (!allowShort && minW > maxW) {
+        throw new Error(`Min % er større end Maks % for ${name}.`);
+      }
+
+      names.push(name);
+      rets.push(ret);
+      stds.push(std);
+      minWs.push(minW);
+      maxWs.push(maxW);
+      customWs.push(customW);
+    }
+
+    if (!allowShort) {
+      const sumMin = minWs.reduce((a, b) => a + b, 0);
+      const sumMax = maxWs.reduce((a, b) => a + b, 0);
+      if (sumMin > 1.0 + 1e-6) throw new Error("Summen af Min % må ikke overstige 100 %.");
+      if (sumMax < 1.0 - 1e-6) throw new Error("Summen af Maks % skal være mindst 100 %.");
+    }
+
+    if (showCustom) {
+      const sumCus = customWs.reduce((a, b) => a + b, 0);
+      if (Math.abs(sumCus - 1.0) > 1e-3) {
+        throw new Error(`Summen af 'Egen %' skal være 100 % (er nu ${(sumCus * 100).toFixed(1)} %).`);
+      }
+    }
+
+    const corr = Array.from({ length: n }, (_, i) =>
+      Array.from({ length: n }, (_, j) => (i === j ? 1.0 : 0.0))
+    );
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const cVal = parseNum(corrInputs[i][j].value);
+        if (Number.isNaN(cVal)) {
+          throw new Error(`Ugyldig korrelation mellem ${names[i]} og ${names[j]}.`);
+        }
+        if (cVal < -1.0 || cVal > 1.0) {
+          throw new Error(`Korrelationen mellem ${names[i]} og ${names[j]} skal ligge mellem -1 og 1.`);
+        }
+        corr[i][j] = cVal;
+        corr[j][i] = cVal;
+      }
+    }
+
+    const eigvals = symmetricEigenvalues(corr);
+    if (Math.min(...eigvals) < -1e-6) {
+      throw new Error(
+        "Korrelationsmatricen er ikke matematisk konsistent (ikke positiv semidefinit). " +
+        "Tjek om de indtastede korrelationer modsiger hinanden."
+      );
+    }
+
+    const cov = Array.from({ length: n }, (_, i) =>
+      Array.from({ length: n }, (_, j) => stds[i] * stds[j] * corr[i][j])
+    );
+
+    return {
+      scenarioName, n, rf, allowShort, showCustom,
+      names, rets, stds, minWs, maxWs, customWs, corr, cov
+    };
+  }
+
+  // --- SVG Graf (Skarp på iPad Retina & A4 PDF) ---
+  function niceTicks(minVal, maxVal, approxCount = 6) {
+    const span = Math.max(maxVal - minVal, 1e-6);
+    const roughStep = span / approxCount;
+    const pow10 = Math.pow(10, Math.floor(Math.log10(roughStep)));
+    const norm = roughStep / pow10;
+    let niceNorm = 1;
+    if (norm <= 1.2) niceNorm = 1;
+    else if (norm <= 2.5) niceNorm = 2;
+    else if (norm <= 5.5) niceNorm = 5;
+    else niceNorm = 10;
+    const step = niceNorm * pow10;
+    const start = Math.ceil(minVal / step) * step;
+    const ticks = [];
+    for (let v = start; v <= maxVal + step * 0.001; v += step) {
+      ticks.push(Math.round(v * 1e6) / 1e6);
+    }
+    return { ticks, step };
+  }
+
+  function buildChartSVG(res, interactive = true) {
+    const { inputs: inp, tangency: tan, custom: cus, efUpper, efLower } = res;
+    const W = 820, H = 520;
+    const pad = { top: 26, right: 32, bottom: 54, left: 64 };
+    const plotW = W - pad.left - pad.right;
+    const plotH = H - pad.top - pad.bottom;
+
+    const rfPct = inp.rf * 100;
+    const assetStds = inp.stds.map(s => s * 100);
+    const assetRets = inp.rets.map(r => r * 100);
+    const efMaxStd = efUpper.length ? Math.max(...efUpper.map(p => p.std * 100)) : 0;
+    const efMaxRet = efUpper.length ? Math.max(...efUpper.map(p => p.ret * 100)) : 0;
+    const efMinRet = efLower.length ? Math.min(...efLower.map(p => p.ret * 100)) : rfPct;
+
+    const maxX = Math.max(
+      Math.max(...assetStds),
+      tan.std * 100,
+      cus ? cus.std * 100 : 0,
+      efMaxStd
+    ) * 1.15;
+
+    const minY = Math.min(rfPct, Math.min(...assetRets), efMinRet) - 1.5;
+    const maxY = Math.max(
+      Math.max(...assetRets),
+      tan.ret * 100,
+      cus ? cus.ret * 100 : 0,
+      efMaxRet
+    ) + 1.8;
+
+    const sx = x => pad.left + (x / maxX) * plotW;
+    const sy = y => pad.top + ((maxY - y) / (maxY - minY)) * plotH;
+
+    const xTicks = niceTicks(0, maxX, 7).ticks;
+    const yTicks = niceTicks(minY, maxY, 6).ticks;
+
+    let parts = [];
+    parts.push(`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Efficient Frontier">`);
+    parts.push(`<defs>
+      <clipPath id="plotClip${interactive ? "Scr" : "Prt"}">
+        <rect x="${pad.left}" y="${pad.top}" width="${plotW}" height="${plotH}" />
+      </clipPath>
+      <marker id="arrow${interactive ? "Scr" : "Prt"}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 1 L 10 5 L 0 9 z" fill="#1c2430"/>
+      </marker>
+    </defs>`);
+
+    // Baggrund + ramme
+    parts.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="#ffffff"/>`);
+    parts.push(`<rect x="${pad.left}" y="${pad.top}" width="${plotW}" height="${plotH}" fill="#fcfdff" stroke="#c8d1dc" stroke-width="1"/>`);
+
+    // Grid & ticks
+    for (const xt of xTicks) {
+      const px = sx(xt);
+      if (px < pad.left - 1 || px > pad.left + plotW + 1) continue;
+      parts.push(`<line x1="${px.toFixed(1)}" y1="${pad.top}" x2="${px.toFixed(1)}" y2="${pad.top + plotH}" stroke="#dde4ec" stroke-dasharray="3,3" stroke-width="1"/>`);
+      parts.push(`<text x="${px.toFixed(1)}" y="${pad.top + plotH + 18}" text-anchor="middle" font-size="11.5" fill="#3a4554">${Number.isInteger(xt) ? xt : xt.toFixed(1)}</text>`);
+    }
+    for (const yt of yTicks) {
+      const py = sy(yt);
+      if (py < pad.top - 1 || py > pad.top + plotH + 1) continue;
+      parts.push(`<line x1="${pad.left}" y1="${py.toFixed(1)}" x2="${pad.left + plotW}" y2="${py.toFixed(1)}" stroke="#dde4ec" stroke-dasharray="3,3" stroke-width="1"/>`);
+      parts.push(`<text x="${pad.left - 9}" y="${(py + 4).toFixed(1)}" text-anchor="end" font-size="11.5" fill="#3a4554">${Number.isInteger(yt) ? yt : yt.toFixed(1)}</text>`);
+    }
+
+    // Aksetitler
+    parts.push(`<text x="${pad.left + plotW / 2}" y="${H - 12}" text-anchor="middle" font-size="13" font-weight="700" fill="#1c2430">Standard Deviation (%)</text>`);
+    parts.push(`<text x="18" y="${pad.top + plotH / 2}" text-anchor="middle" font-size="13" font-weight="700" fill="#1c2430" transform="rotate(-90 18 ${pad.top + plotH / 2})">Expected Return (%)</text>`);
+
+    const clipId = `url(#plotClip${interactive ? "Scr" : "Prt"})`;
+
+    // Klippet graf-indhold
+    parts.push(`<g clip-path="${clipId}">`);
+
+    // Best possible CAL
+    const calX2 = maxX;
+    const calY2 = rfPct + tan.sharpe * calX2;
+    parts.push(`<line x1="${sx(0).toFixed(1)}" y1="${sy(rfPct).toFixed(1)}" x2="${sx(calX2).toFixed(1)}" y2="${sy(calY2).toFixed(1)}" stroke="#111827" stroke-width="1.6"/>`);
+
+    // Ineffektiv gren
+    if (efLower.length > 1) {
+      const dLo = efLower.map((p, idx) => `${idx === 0 ? "M" : "L"}${sx(p.std * 100).toFixed(1)},${sy(p.ret * 100).toFixed(1)}`).join(" ");
+      parts.push(`<path d="${dLo}" fill="none" stroke="#9aa3ae" stroke-width="1.5"/>`);
+    }
+
+    // Effektiv gren
+    if (efUpper.length > 1) {
+      const dUp = efUpper.map((p, idx) => `${idx === 0 ? "M" : "L"}${sx(p.std * 100).toFixed(1)},${sy(p.ret * 100).toFixed(1)}`).join(" ");
+      parts.push(`<path d="${dUp}" fill="none" stroke="#111827" stroke-width="2.6"/>`);
+    }
+
+    // Interaktive usynlige klik-mål langs Efficient Frontier
+    if (interactive && efUpper.length > 2) {
+      for (let i = 0; i < efUpper.length; i += 2) {
+        const p = efUpper[i];
+        parts.push(`<circle class="ef-hit" data-kind="ef" data-idx="${i}" cx="${sx(p.std * 100).toFixed(1)}" cy="${sy(p.ret * 100).toFixed(1)}" r="8" fill="transparent" style="cursor:pointer;"/>`);
+      }
+    }
+
+    // CAL-pil & tekst
+    const calMidX = Math.max(tan.std * 100 * 0.48, maxX * 0.13);
+    const calMidY = rfPct + tan.sharpe * calMidX;
+    const calPx = sx(calMidX);
+    const calPy = sy(calMidY);
+    const lblPy = Math.min(pad.top + plotH - 18, calPy + 58);
+    if (calPx > pad.left + 25 && calPx < pad.left + plotW - 40 && calPy > pad.top + 15 && calPy < pad.top + plotH - 25) {
+      parts.push(`<line x1="${calPx.toFixed(1)}" y1="${(lblPy - 12).toFixed(1)}" x2="${calPx.toFixed(1)}" y2="${(calPy + 5).toFixed(1)}" stroke="#1c2430" stroke-width="1" marker-end="url(#arrow${interactive ? "Scr" : "Prt"})"/>`);
+      parts.push(`<rect x="${(calPx - 54).toFixed(1)}" y="${(lblPy - 10).toFixed(1)}" width="108" height="16" rx="3" fill="white" fill-opacity="0.82"/>`);
+      parts.push(`<text x="${calPx.toFixed(1)}" y="${(lblPy + 2).toFixed(1)}" text-anchor="middle" font-size="11" fill="#1c2430">Best possible CAL</text>`);
+    }
+
+    // Efficient Frontier etiket
+    if (efUpper.length > 6) {
+      const idx = Math.floor(efUpper.length * 0.68);
+      const epx = Math.min(pad.left + plotW - 105, sx(efUpper[idx].std * 100) + 10);
+      const epy = Math.max(pad.top + 18, sy(efUpper[idx].ret * 100) + 16);
+      parts.push(`<rect x="${(epx - 3).toFixed(1)}" y="${(epy - 12).toFixed(1)}" width="102" height="16" rx="3" fill="white" fill-opacity="0.82"/>`);
+      parts.push(`<text x="${epx.toFixed(1)}" y="${epy.toFixed(1)}" font-size="11.5" font-weight="700" fill="#111827">Efficient Frontier</text>`);
+    }
+
+    // Enkeltaktiver
+    for (let i = 0; i < inp.n; i++) {
+      const px = sx(assetStds[i]);
+      const py = sy(assetRets[i]);
+      const nm = escapeHtml(inp.names[i]);
+      const alignRight = px > pad.left + plotW - 88;
+      const tx = alignRight ? px - 9 : px + 9;
+      const anchor = alignRight ? "end" : "start";
+      const approxW = Math.max(36, inp.names[i].length * 6.8 + 8);
+      const rx = alignRight ? tx - approxW + 2 : tx - 3;
+
+      parts.push(`<rect x="${rx.toFixed(1)}" y="${(py - 11).toFixed(1)}" width="${approxW.toFixed(1)}" height="16" rx="3" fill="white" fill-opacity="0.80"/>`);
+      parts.push(`<text x="${tx.toFixed(1)}" y="${(py + 1).toFixed(1)}" text-anchor="${anchor}" font-size="11.5" fill="#1c2430">${nm}</text>`);
+      parts.push(`<circle class="pt-hit" data-kind="asset" data-idx="${i}" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="5.5" fill="#d49b1a" stroke="#111827" stroke-width="1.2" style="${interactive ? "cursor:pointer;" : ""}"/>`);
+    }
+
+    // Risikofri rente prik + label
+    const rfPx = sx(0);
+    const rfPy = sy(rfPct);
+    parts.push(`<circle cx="${rfPx.toFixed(1)}" cy="${rfPy.toFixed(1)}" r="4.5" fill="#111827"/>`);
+    parts.push(`<rect x="${(rfPx + 7).toFixed(1)}" y="${(rfPy + 4).toFixed(1)}" width="122" height="16" rx="3" fill="white" fill-opacity="0.84"/>`);
+    parts.push(`<text x="${(rfPx + 10).toFixed(1)}" y="${(rfPy + 16).toFixed(1)}" font-size="11" fill="#1c2430">Risk-free rate (${rfPct.toFixed(1)}%)</text>`);
+
+    // Tangency Portfolio
+    const tx = sx(tan.std * 100);
+    const ty = sy(tan.ret * 100);
+    const tanLeft = tx > pad.left + 155;
+    const tLblX = tanLeft ? tx - 14 : tx + 14;
+    const tLblY = Math.max(pad.top + 28, ty - 22);
+    const tAnchor = tanLeft ? "end" : "start";
+    const tBoxX = tanLeft ? tLblX - 118 : tLblX - 4;
+    parts.push(`<line x1="${tx.toFixed(1)}" y1="${ty.toFixed(1)}" x2="${(tanLeft ? tLblX + 4 : tLblX - 4).toFixed(1)}" y2="${(tLblY + 4).toFixed(1)}" stroke="#6b7280" stroke-width="1"/>`);
+    parts.push(`<rect x="${tBoxX.toFixed(1)}" y="${(tLblY - 13).toFixed(1)}" width="122" height="30" rx="4" fill="white" fill-opacity="0.88"/>`);
+    parts.push(`<text x="${tLblX.toFixed(1)}" y="${(tLblY - 1).toFixed(1)}" text-anchor="${tAnchor}" font-size="11.5" font-weight="700" fill="#111827">Tangency Portfolio</text>`);
+    parts.push(`<text x="${tLblX.toFixed(1)}" y="${(tLblY + 13).toFixed(1)}" text-anchor="${tAnchor}" font-size="11" font-weight="700" fill="#b91c1c">(SR: ${tan.sharpe.toFixed(2)})</text>`);
+    parts.push(`<circle class="pt-hit" data-kind="tangency" cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="6.8" fill="#d62728" stroke="#111827" stroke-width="1.3" style="${interactive ? "cursor:pointer;" : ""}"/>`);
+
+    // Egen portefølje (blå rombe)
+    if (cus) {
+      const cx = sx(cus.std * 100);
+      const cy = sy(cus.ret * 100);
+      const placeRight = cx < pad.left + plotW - 140;
+      const cLblX = placeRight ? cx + 14 : cx - 14;
+      const cLblY = Math.min(pad.top + plotH - 22, cy + 26);
+      const cAnchor = placeRight ? "start" : "end";
+      const cBoxX = placeRight ? cLblX - 4 : cLblX - 104;
+
+      parts.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${(placeRight ? cLblX - 4 : cLblX + 4).toFixed(1)}" y2="${(cLblY - 4).toFixed(1)}" stroke="#0072bd" stroke-width="1"/>`);
+      parts.push(`<rect x="${cBoxX.toFixed(1)}" y="${(cLblY - 13).toFixed(1)}" width="108" height="30" rx="4" fill="white" fill-opacity="0.88"/>`);
+      parts.push(`<text x="${cLblX.toFixed(1)}" y="${(cLblY - 1).toFixed(1)}" text-anchor="${cAnchor}" font-size="11.5" font-weight="700" fill="#004d80">Egen portefølje</text>`);
+      parts.push(`<text x="${cLblX.toFixed(1)}" y="${(cLblY + 13).toFixed(1)}" text-anchor="${cAnchor}" font-size="11" font-weight="700" fill="#004d80">(SR: ${cus.sharpe.toFixed(2)})</text>`);
+
+      const dSize = 7.5;
+      const diamondPts = `${cx},${cy - dSize} ${cx + dSize},${cy} ${cx},${cy + dSize} ${cx - dSize},${cy}`;
+      parts.push(`<polygon class="pt-hit" data-kind="custom" points="${diamondPts}" fill="#0072bd" stroke="#111827" stroke-width="1.3" style="${interactive ? "cursor:pointer;" : ""}"/>`);
+    }
+
+    parts.push(`</g>`);
+
+    // Signaturforklaring (nederst til højre)
+    const legH = cus ? 82 : 64;
+    const legW = 148;
+    const legX = pad.left + plotW - legW - 10;
+    const legY = pad.top + plotH - legH - 10;
+    parts.push(`<g>`);
+    parts.push(`<rect x="${legX}" y="${legY}" width="${legW}" height="${legH}" rx="5" fill="#ffffff" fill-opacity="0.93" stroke="#cbd5e1" stroke-width="1"/>`);
+    parts.push(`<line x1="${legX + 10}" y1="${legY + 16}" x2="${legX + 28}" y2="${legY + 16}" stroke="#111827" stroke-width="2.4"/>`);
+    parts.push(`<text x="${legX + 35}" y="${legY + 20}" font-size="11" fill="#1c2430">Efficient Frontier</text>`);
+
+    parts.push(`<circle cx="${legX + 19}" cy="${legY + 34}" r="4.5" fill="#d49b1a" stroke="#111827" stroke-width="1"/>`);
+    parts.push(`<text x="${legX + 35}" y="${legY + 38}" font-size="11" fill="#1c2430">Individual Assets</text>`);
+
+    parts.push(`<circle cx="${legX + 19}" cy="${legY + 52}" r="5" fill="#d62728" stroke="#111827" stroke-width="1"/>`);
+    parts.push(`<text x="${legX + 35}" y="${legY + 56}" font-size="11" fill="#1c2430">Tangency Portfolio</text>`);
+
+    if (cus) {
+      const dx = legX + 19, dy = legY + 70, ds = 5.5;
+      parts.push(`<polygon points="${dx},${dy - ds} ${dx + ds},${dy} ${dx},${dy + ds} ${dx - ds},${dy}" fill="#0072bd" stroke="#111827" stroke-width="1"/>`);
+      parts.push(`<text x="${legX + 35}" y="${legY + 74}" font-size="11" fill="#1c2430">Egen portefølje</text>`);
+    }
+    parts.push(`</g>`);
+
+    parts.push(`</svg>`);
+    return parts.join("");
+  }
+
+  function showInspector(label, stats, names) {
+    const bar = document.getElementById("inspectorBar");
+    if (!stats) return;
+    let weightsHtml = "";
+    if (stats.weights) {
+      const wStr = names
+        .map((nm, i) => `${escapeHtml(nm)}: <strong>${fmt(stats.weights[i] * 100, 1)}%</strong>`)
+        .join(" · ");
+      weightsHtml = `<div style="width:100%; font-size:0.8rem; color:#475569;">${wStr}</div>`;
+    }
+    bar.innerHTML = `
+      <div><strong>${escapeHtml(label)}</strong></div>
+      <div>
+        Afkast: <strong>${fmt(stats.ret * 100)}%</strong>  | 
+        CAGR: <strong>${fmt(stats.cagr * 100)}%</strong>  | 
+        Std: <strong>${fmt(stats.std * 100)}%</strong>  | 
+        Sharpe: <strong>${fmt(stats.sharpe, 3)}</strong>
+      </div>
+      ${weightsHtml}
+    `;
+  }
+
+  function attachChartInteractions(res) {
+    const container = document.getElementById("chartContainer");
+    const { inputs: inp, tangency: tan, custom: cus, efUpper } = res;
+
+    container.querySelectorAll("[data-kind]").forEach(el => {
+      const handler = () => {
+        const kind = el.getAttribute("data-kind");
+        const idx = Number(el.getAttribute("data-idx"));
+        if (kind === "tangency") {
+          showInspector("Tangency Portfolio (Max Sharpe)", tan, inp.names);
+        } else if (kind === "custom" && cus) {
+          showInspector("Egen portefølje", cus, inp.names);
+        } else if (kind === "ef" && efUpper[idx]) {
+          showInspector("Efficient Frontier-punkt", efUpper[idx], inp.names);
+        } else if (kind === "asset") {
+          const r = inp.rets[idx];
+          const s = inp.stds[idx];
+          const sr = (r - inp.rf) / s;
+          const cagr = r - 0.5 * s * s;
+          showInspector(`Enkeltaktiv: ${inp.names[idx]}`, { ret: r, cagr, std: s, sharpe: sr }, inp.names);
+        }
+      };
+      el.addEventListener("click", handler);
+      el.addEventListener("mouseenter", handler);
+    });
+  }
+
+  // --- Resultattabel på skærm ---
+  function renderResultsTable(res) {
+    const { inputs: inp, tangency: tan, custom: cus, gmvp } = res;
+    const tbl = document.getElementById("resultsTable");
+
+    const cols = cus
+      ? ["Nøgletal / Aktivvægt", "Tangency (Max Sharpe)", "Egen portefølje", "Min. Varians (GMVP)"]
+      : ["Nøgletal / Aktivvægt", "Tangency (Max Sharpe)", "Min. Varians (GMVP)"];
+
+    const rows = [
+      {
+        label: "Forventet afkast (arit.)",
+        vals: cus
+          ? [`${fmt(tan.ret * 100)} %`, `${fmt(cus.ret * 100)} %`, `${fmt(gmvp.ret * 100)} %`]
+          : [`${fmt(tan.ret * 100)} %`, `${fmt(gmvp.ret * 100)} %`]
+      },
+      {
+        label: "Forventet CAGR (geom.)",
+        hl: true,
+        vals: cus
+          ? [`${fmt(tan.cagr * 100)} %`, `${fmt(cus.cagr * 100)} %`, `${fmt(gmvp.cagr * 100)} %`]
+          : [`${fmt(tan.cagr * 100)} %`, `${fmt(gmvp.cagr * 100)} %`]
+      },
+      {
+        label: "Volatility drag",
+        vals: cus
+          ? [`${fmtSigned(-tan.volDrag * 100)} %`, `${fmtSigned(-cus.volDrag * 100)} %`, `${fmtSigned(-gmvp.volDrag * 100)} %`]
+          : [`${fmtSigned(-tan.volDrag * 100)} %`, `${fmtSigned(-gmvp.volDrag * 100)} %`]
+      },
+      {
+        label: "Rebalanceringsbonus",
+        vals: cus
+          ? [fmtBonus(tan.rebalBonus), fmtBonus(cus.rebalBonus), fmtBonus(gmvp.rebalBonus)]
+          : [fmtBonus(tan.rebalBonus), fmtBonus(gmvp.rebalBonus)]
+      },
+      {
+        label: "Standardafvigelse",
+        vals: cus
+          ? [`${fmt(tan.std * 100)} %`, `${fmt(cus.std * 100)} %`, `${fmt(gmvp.std * 100)} %`]
+          : [`${fmt(tan.std * 100)} %`, `${fmt(gmvp.std * 100)} %`]
+      },
+      {
+        label: "Sharpe Ratio",
+        hl: true,
+        vals: cus
+          ? [fmt(tan.sharpe, 3), `${fmt(cus.sharpe, 3)} (${fmtSigned(cus.sharpeDiff, 3)})`, fmt(gmvp.sharpe, 3)]
+          : [fmt(tan.sharpe, 3), fmt(gmvp.sharpe, 3)]
+      }
+    ];
+
+    if (cus) {
+      rows.push({
+        label: "CAL-afkast v/samme risiko",
+        vals: [`${fmt(tan.ret * 100)} %`, `${fmt(cus.calRetSameRisk * 100)} %`, "-"]
+      });
+    }
+
+    inp.names.forEach((nm, i) => {
+      rows.push({
+        label: `Vægt: ${nm}`,
+        sep: i === 0,
+        vals: cus
+          ? [`${fmt(tan.weights[i] * 100)} %`, `${fmt(cus.weights[i] * 100)} %`, `${fmt(gmvp.weights[i] * 100)} %`]
+          : [`${fmt(tan.weights[i] * 100)} %`, `${fmt(gmvp.weights[i] * 100)} %`]
+      });
+    });
+
+    const theadHtml = `<thead><tr>${cols.map(c => `<th>${escapeHtml(c)}</th>`).join("")}</tr></thead>`;
+    const tbodyHtml = `<tbody>${rows.map(r => {
+      const cls = [r.hl ? "hl-row" : "", r.sep ? "section-sep" : ""].filter(Boolean).join(" ");
+      return `<tr${cls ? ` class="${cls}"` : ""}><td>${escapeHtml(r.label)}</td>${r.vals.map(v => `<td>${escapeHtml(v)}</td>`).join("")}</tr>`;
+    }).join("")}</tbody>`;
+
+    tbl.innerHTML = theadHtml + tbodyHtml;
+  }
+
+  // --- Print / A4 PDF Rapport ---
+  function buildPrintReport(res) {
+    const { inputs: inp, tangency: tan, custom: cus, gmvp } = res;
+    const now = new Date();
+    const pad2 = x => String(x).padStart(2, "0");
+    const dateStr = `${pad2(now.getDate())}-${pad2(now.getMonth() + 1)}-${now.getFullYear()} kl. ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+    const shortStr = inp.allowShort ? "Ja (ubegrænset)" : "Nej (vægtbegrænset)";
+
+    // Inddata-tabel
+    const inRows = inp.names.map((nm, i) => `
+      <tr>
+        <td class="left">${escapeHtml(nm.slice(0, 14))}</td>
+        <td>${fmt(inp.rets[i] * 100)}</td>
+        <td>${fmt(inp.stds[i] * 100)}</td>
+        <td>${inp.allowShort ? "-" : fmt(inp.minWs[i] * 100, 1)}</td>
+        <td>${inp.allowShort ? "-" : fmt(inp.maxWs[i] * 100, 1)}</td>
+        <td>${inp.showCustom ? fmt(inp.customWs[i] * 100, 1) : "-"}</td>
+      </tr>
+    `).join("");
+
+    // Korrelationsmatrix
+    const shortNames = inp.names.map(nm => nm.slice(0, 7));
+    const corrHeader = `<tr><th></th>${shortNames.map(s => `<th>${escapeHtml(s)}</th>`).join("")}</tr>`;
+    const corrRows = inp.names.map((_, i) => `
+      <tr>
+        <td class="corr-head">${escapeHtml(shortNames[i])}</td>
+        ${inp.corr[i].map((v, j) => `<td class="${i === j ? "corr-diag" : ""}">${fmt(v, 3)}</td>`).join("")}
+      </tr>
+    `).join("");
+
+    // Resultattabel
+    const resHead = cus
+      ? `<tr><th>Nøgletal / Aktivvægt</th><th>Tangency (Max Sharpe)</th><th>Egen portefølje</th><th>Min. Varians (GMVP)</th></tr>`
+      : `<tr><th>Nøgletal / Aktivvægt</th><th>Tangency (Max Sharpe)</th><th>Min. Varians (GMVP)</th></tr>`;
+
+    const resRowsArr = [
+      { l: "Forventet afkast (arit.)", v: cus ? [`${fmt(tan.ret * 100)} %`, `${fmt(cus.ret * 100)} %`, `${fmt(gmvp.ret * 100)} %`] : [`${fmt(tan.ret * 100)} %`, `${fmt(gmvp.ret * 100)} %`] },
+      { l: "Forventet CAGR (geom.)", hl: true, v: cus ? [`${fmt(tan.cagr * 100)} %`, `${fmt(cus.cagr * 100)} %`, `${fmt(gmvp.cagr * 100)} %`] : [`${fmt(tan.cagr * 100)} %`, `${fmt(gmvp.cagr * 100)} %`] },
+      { l: "Volatility drag", v: cus ? [`${fmtSigned(-tan.volDrag * 100)} %`, `${fmtSigned(-cus.volDrag * 100)} %`, `${fmtSigned(-gmvp.volDrag * 100)} %`] : [`${fmtSigned(-tan.volDrag * 100)} %`, `${fmtSigned(-gmvp.volDrag * 100)} %`] },
+      { l: "Rebalanceringsbonus", v: cus ? [fmtBonus(tan.rebalBonus), fmtBonus(cus.rebalBonus), fmtBonus(gmvp.rebalBonus)] : [fmtBonus(tan.rebalBonus), fmtBonus(gmvp.rebalBonus)] },
+      { l: "Standardafvigelse", v: cus ? [`${fmt(tan.std * 100)} %`, `${fmt(cus.std * 100)} %`, `${fmt(gmvp.std * 100)} %`] : [`${fmt(tan.std * 100)} %`, `${fmt(gmvp.std * 100)} %`] },
+      { l: "Sharpe Ratio", hl: true, v: cus ? [fmt(tan.sharpe, 3), `${fmt(cus.sharpe, 3)} (${fmtSigned(cus.sharpeDiff, 3)})`, fmt(gmvp.sharpe, 3)] : [fmt(tan.sharpe, 3), fmt(gmvp.sharpe, 3)] }
+    ];
+    if (cus) {
+      resRowsArr.push({ l: "CAL-afkast v/samme risiko", v: [`${fmt(tan.ret * 100)} %`, `${fmt(cus.calRetSameRisk * 100)} %`, "-"] });
+    }
+    inp.names.forEach((nm, i) => {
+      resRowsArr.push({
+        l: `Vægt: ${nm}`,
+        v: cus
+          ? [`${fmt(tan.weights[i] * 100)} %`, `${fmt(cus.weights[i] * 100)} %`, `${fmt(gmvp.weights[i] * 100)} %`]
+          : [`${fmt(tan.weights[i] * 100)} %`, `${fmt(gmvp.weights[i] * 100)} %`]
+      });
+    });
+
+    const resBody = resRowsArr.map(r => `
+      <tr class="${r.hl ? "hl" : ""}">
+        <td class="left">${escapeHtml(r.l)}</td>
+        ${r.v.map(val => `<td>${escapeHtml(val)}</td>`).join("")}
+      </tr>
+    `).join("");
+
+    document.getElementById("print-report").innerHTML = `
+      <div class="pr-header">
+        <h1 class="pr-title">MPT Porteføljerapport — ${escapeHtml(inp.scenarioName)}</h1>
+        <p class="pr-meta">
+          Genereret: ${dateStr}  |  Aktiver: ${inp.n}  | 
+          Risikofri rente: ${fmt(inp.rf * 100)} %  |  Shorting: ${shortStr}
+        </p>
+      </div>
+      <div class="pr-chart">${buildChartSVG(res, false)}</div>
+      <div class="pr-mid-grid">
+        <div>
+          <h2 class="pr-sec-title">Inddata & vægtbegrænsninger (%)</h2>
+          <table class="pr-table">
+            <thead><tr><th>Aktiv</th><th>Afk. %</th><th>Std %</th><th>Min %</th><th>Maks %</th><th>Egen %</th></tr></thead>
+            <tbody>${inRows}</tbody>
+          </table>
+        </div>
+        <div>
+          <h2 class="pr-sec-title">Korrelationsmatrix</h2>
+          <table class="pr-table">
+            <thead>${corrHeader}</thead>
+            <tbody>${corrRows}</tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h2 class="pr-sec-title">Beregnede porteføljer & optimale vægte</h2>
+        <table class="pr-table">
+          <thead>${resHead}</thead>
+          <tbody>${resBody}</tbody>
+        </table>
+      </div>
+      <div class="pr-footer">
+        Beregnet med MPT Efficient Frontier-værktøj (Markowitz Mean-Variance).
+        CAGR ≈ μ − ½σ²; Rebalanceringsbonus ≈ ½(Σw<sub>i</sub>σ<sub>i</sub>² − σ<sub>p</sub>²).
+      </div>
+    `;
+  }
+
+  // --- Hovedberegning & Rendering ---
+  function calculateAndRender() {
+    const errEl = document.getElementById("errorBanner");
+    errEl.style.display = "none";
+    persistLocalState();
+
+    try {
+      const inp = readAndValidateInputs();
+      const res = runMPT(inp);
+      lastResults = res;
+
+      document.getElementById("chartScenarioBadge").textContent = inp.scenarioName;
+      document.getElementById("chartContainer").innerHTML = buildChartSVG(res, true);
+      attachChartInteractions(res);
+      renderResultsTable(res);
+
+      const bar = document.getElementById("inspectorBar");
+      bar.innerHTML = `<span class="inspector-muted">Tryk på et punkt på kurven eller et aktiv for at aflæse vægte og nøgletal.</span>`;
+      return true;
+    } catch (err) {
+      errEl.textContent = "Fejl i beregning: " + err.message;
+      errEl.style.display = "block";
+      return false;
+    }
+  }
+
+  // --- Gem & Hent JSON (100 % kompatibel med Python-programmet) ---
+  function saveScenarioJSON() {
+    if (!calculateAndRender()) return;
+    const raw = getRawFormState();
+    const res = lastResults;
+    const names = res.inputs.names;
+
+    const now = new Date();
+    const pad2 = x => String(x).padStart(2, "0");
+    const savedAt = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+
+    function packPort(p) {
+      if (!p) return null;
+      const weightsPct = {};
+      names.forEach((nm, i) => {
+        weightsPct[nm] = Math.round(p.weights[i] * 1000000) / 10000;
+      });
+      return {
+        expected_return_pct: Math.round(p.ret * 1000000) / 10000,
+        expected_cagr_pct: Math.round(p.cagr * 1000000) / 10000,
+        volatility_drag_pct: Math.round(-p.volDrag * 1000000) / 10000,
+        rebalancing_bonus_pct: p.rebalBonus !== null ? Math.round(p.rebalBonus * 1000000) / 10000 : null,
+        std_dev_pct: Math.round(p.std * 1000000) / 10000,
+        sharpe_ratio: Math.round(p.sharpe * 10000) / 10000,
+        weights_pct: weightsPct
+      };
+    }
+
+    const payload = {
+      app: "MPT Efficient Frontier",
+      version: 3,
+      saved_at: savedAt,
+      scenario_name: raw.scenario_name,
+      num_assets: raw.num_assets,
+      rf: raw.rf,
+      allow_short: raw.allow_short,
+      show_custom: raw.show_custom,
+      assets: raw.assets,
+      corr_matrix: raw.corr_matrix,
+      calculated_summary: {
+        tangency: packPort(res.tangency),
+        custom: packPort(res.custom),
+        gmvp: packPort(res.gmvp)
+      }
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = sanitizeFilename(raw.scenario_name) + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function triggerLoadJSON() {
+    const fileInput = document.getElementById("fileInput");
+    fileInput.value = "";
+    fileInput.click();
+  }
+
+  function handleFileLoaded(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result));
+        if (!data.scenario_name) {
+          data.scenario_name = file.name.replace(/\.json$/i, "");
+        }
+        applyFormState(data);
+        calculateAndRender();
+      } catch (err) {
+        const errEl = document.getElementById("errorBanner");
+        errEl.textContent = "Kunne ikke indlæse JSON-fil: " + err.message;
+        errEl.style.display = "block";
+      }
+    };
+    reader.readAsText(file, "utf-8");
+  }
+
+  function exportPDF() {
+    if (!calculateAndRender()) return;
+    const prevTitle = document.title;
+    const today = new Date().toISOString().slice(0, 10);
+    document.title = `${sanitizeFilename(lastResults.inputs.scenarioName)}_${today}`;
+    buildPrintReport(lastResults);
+    window.print();
+    setTimeout(() => { document.title = prevTitle; }, 500);
+  }
+
+  // --- Initialisering ---
+  buildInputTables();
+
+  document.getElementById("numAssets").addEventListener("change", () => {
+    updateActiveRows();
+    persistLocalState();
+  });
+  document.getElementById("scenarioName").addEventListener("input", persistLocalState);
+  document.getElementById("rfInput").addEventListener("input", persistLocalState);
+  document.getElementById("allowShort").addEventListener("change", () => {
+    persistLocalState();
+    calculateAndRender();
+  });
+  document.getElementById("showCustom").addEventListener("change", () => {
+    persistLocalState();
+    calculateAndRender();
+  });
+
+  document.getElementById("btnCalc").addEventListener("click", calculateAndRender);
+  document.getElementById("btnSave").addEventListener("click", saveScenarioJSON);
+  document.getElementById("btnTopSave").addEventListener("click", saveScenarioJSON);
+  document.getElementById("btnLoad").addEventListener("click", triggerLoadJSON);
+  document.getElementById("btnTopLoad").addEventListener("click", triggerLoadJSON);
+  document.getElementById("btnPdf").addEventListener("click", exportPDF);
+  document.getElementById("btnTopPdf").addEventListener("click", exportPDF);
+  document.getElementById("fileInput").addEventListener("change", handleFileLoaded);
+
+  document.getElementById("btnReset").addEventListener("click", () => {
+    applyFormState(DEFAULT_STATE);
+    calculateAndRender();
+  });
+
+  // Genvejstaster på PC / iPad med eksternt tastatur
+  window.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      saveScenarioJSON();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") {
+      e.preventDefault();
+      triggerLoadJSON();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
+      e.preventDefault();
+      exportPDF();
+    }
+  });
+
+  // Indlæs seneste tilstand eller standardtal
+  let initial = DEFAULT_STATE;
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) initial = JSON.parse(saved);
+  } catch (_) {}
+
+  applyFormState(initial);
+  calculateAndRender();
+})();
+</script>
+</body>
+</html>
