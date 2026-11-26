@@ -1845,19 +1845,21 @@
       parts.push(`<text x="${epx.toFixed(1)}" y="${epy.toFixed(1)}" font-size="11.5" font-weight="700" fill="#111827">Efficient Frontier</text>`);
     }
 
-    // Individual Assets
+// Individual Assets
     for (let i = 0; i < inp.n; i++) {
       const px = sx(assetStds[i]);
       const py = sy(assetRets[i]);
       const nm = escapeHtml(inp.names[i]);
+      const isCat = inp.names[i].toLowerCase().includes("cat");
       const alignRight = px > pad.left + plotW - 88;
-      const tx = alignRight ? px - 9 : px + 9;
-      const anchor = alignRight ? "end" : "start";
+      const tx = isCat ? px : (alignRight ? px - 9 : px + 9);
+      const ty = isCat ? py + 20 : py + 4;
+      const anchor = isCat ? "middle" : (alignRight ? "end" : "start");
       const approxW = Math.max(36, inp.names[i].length * 6.8 + 8);
-      const rx = alignRight ? tx - approxW + 2 : tx - 3;
+      const rx = isCat ? tx - approxW / 2 : (alignRight ? tx - approxW + 2 : tx - 3);
 
-      parts.push(`<rect x="${rx.toFixed(1)}" y="${(py - 8).toFixed(1)}" width="${approxW.toFixed(1)}" height="16" rx="3" fill="white" fill-opacity="0.82"/>`);
-      parts.push(`<text x="${tx.toFixed(1)}" y="${(py + 4).toFixed(1)}" text-anchor="${anchor}" font-size="11.5" fill="#1c2430">${nm}</text>`);
+      parts.push(`<rect x="${rx.toFixed(1)}" y="${(ty - 12).toFixed(1)}" width="${approxW.toFixed(1)}" height="16" rx="3" fill="white" fill-opacity="0.86"/>`);
+      parts.push(`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="11.5" fill="#1c2430">${nm}</text>`);
       parts.push(`<circle class="pt-hit" data-kind="asset" data-idx="${i}" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="5.5" fill="#d49b1a" stroke="#111827" stroke-width="1.2" style="${interactive ? "cursor:pointer;" : ""}"/>`);
     }
 
