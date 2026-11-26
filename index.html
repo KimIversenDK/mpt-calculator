@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="da">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="MPT Portefølje">
-  <title>MPT - Efficient Frontier, Begrænsninger & Egen Portefølje</title>
+  <meta name="apple-mobile-web-app-title" content="MPT Portfolio">
+  <title>MPT — Efficient Frontier, Constraints & Custom Portfolio</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f3b5c'/%3E%3Cpath d='M12 48 L52 14' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' opacity='0.6'/%3E%3Cpath d='M22 46 Q20 26 50 18' fill='none' stroke='%23f5b82e' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='30' cy='29' r='5' fill='%23e03131' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='36' fill='%231f3b5c'/%3E%3Cpath d='M32 138 L148 38' stroke='%23ffffff' stroke-width='7' stroke-linecap='round' opacity='0.55'/%3E%3Cpath d='M60 132 Q54 74 144 50' fill='none' stroke='%23f5b82e' stroke-width='10' stroke-linecap='round'/%3E%3Ccircle cx='84' cy='83' r='13' fill='%23e03131' stroke='%23fff' stroke-width='4'/%3E%3C/svg%3E">
   <style>
@@ -58,7 +58,7 @@
 
     .topbar h1 {
       margin: 0;
-      font-size: 1.08rem;
+      font-size: 1.06rem;
       font-weight: 700;
       letter-spacing: -0.01em;
     }
@@ -114,6 +114,58 @@
       background: #f0f4f8;
     }
 
+    /* --- Help Badges & Floating Tooltip --- */
+    .help-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      min-height: 16px;
+      padding: 0;
+      margin-left: 4px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: var(--navy);
+      border: 1px solid #cbd5e1;
+      font-size: 10.5px;
+      font-weight: 700;
+      line-height: 1;
+      vertical-align: middle;
+      cursor: help;
+      flex-shrink: 0;
+    }
+
+    .help-badge:hover,
+    .help-badge:focus {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+      outline: none;
+    }
+
+    .floating-tooltip {
+      position: fixed;
+      z-index: 1000;
+      max-width: 300px;
+      background: #152940;
+      color: #ffffff;
+      font-size: 0.81rem;
+      line-height: 1.42;
+      padding: 9px 12px;
+      border-radius: 8px;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.28);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(3px);
+      transition: opacity 0.14s ease, transform 0.14s ease;
+    }
+
+    .floating-tooltip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     /* --- Main Grid --- */
     .app-container {
       max-width: 1520px;
@@ -121,12 +173,12 @@
       padding: 14px;
       padding-bottom: max(20px, env(safe-area-inset-bottom));
       display: grid;
-      grid-template-columns: 510px 1fr;
+      grid-template-columns: 525px 1fr;
       gap: 14px;
       align-items: start;
     }
 
-    @media (max-width: 1120px) {
+    @media (max-width: 1140px) {
       .app-container {
         grid-template-columns: 1fr;
       }
@@ -191,12 +243,14 @@
       font-size: 0.85rem;
       font-weight: 500;
       color: var(--text);
+      display: inline-flex;
+      align-items: center;
     }
 
     input[type="text"],
     select {
       font-family: inherit;
-      font-size: 15px; /* Forebygger uønsket iPad Safari auto-zoom */
+      font-size: 15px;
       padding: 6px 8px;
       border: 1px solid #c3cdd8;
       border-radius: 6px;
@@ -226,6 +280,7 @@
       margin-top: 6px;
       cursor: pointer;
       user-select: none;
+      font-size: 0.85rem;
     }
 
     .check-row input[type="checkbox"] {
@@ -233,6 +288,7 @@
       height: 18px;
       accent-color: var(--navy);
       margin: 0;
+      flex-shrink: 0;
     }
 
     /* --- Input Tables --- */
@@ -244,15 +300,16 @@
     table.input-grid {
       width: 100%;
       border-collapse: collapse;
-      min-width: 440px;
+      min-width: 465px;
     }
 
     table.input-grid th {
-      font-size: 0.78rem;
+      font-size: 0.77rem;
       font-weight: 700;
       color: var(--muted);
       padding: 0 3px 6px 3px;
       text-align: right;
+      white-space: nowrap;
     }
 
     table.input-grid th:nth-child(1),
@@ -449,6 +506,27 @@
       color: var(--muted);
     }
 
+    /* --- Disclaimer Box --- */
+    .disclaimer-box {
+      max-width: 1520px;
+      margin: 0 auto 18px auto;
+      padding: 0 14px;
+    }
+
+    .disclaimer-inner {
+      background: #fffbeb;
+      border: 1px solid #f3d98b;
+      color: #5c4813;
+      border-radius: var(--radius);
+      padding: 11px 14px;
+      font-size: 0.8rem;
+      line-height: 1.48;
+    }
+
+    .disclaimer-inner strong {
+      color: #423209;
+    }
+
     /* --- Print-only A4 Report --- */
     #print-report {
       display: none;
@@ -469,7 +547,8 @@
         background: #fff !important;
       }
 
-      #screen-app {
+      #screen-app,
+      .floating-tooltip {
         display: none !important;
       }
 
@@ -508,7 +587,7 @@
       .pr-chart svg {
         display: block;
         width: 100%;
-        max-height: 92mm;
+        max-height: 90mm;
         height: auto;
       }
 
@@ -535,7 +614,7 @@
       table.pr-table th,
       table.pr-table td {
         border: 0.6px solid #cfd6de;
-        padding: 3.2px 5px;
+        padding: 3.1px 5px;
         text-align: center;
       }
 
@@ -570,8 +649,9 @@
 
       .pr-footer {
         margin-top: 8px;
-        font-size: 7.3pt;
-        color: #718096;
+        font-size: 7.2pt;
+        color: #5a6778;
+        line-height: 1.38;
       }
     }
   </style>
@@ -580,35 +660,41 @@
 
 <div id="screen-app">
   <header class="topbar">
-    <h1>MPT — Efficient Frontier, Begrænsninger & Egen Portefølje</h1>
+    <h1>MPT — Efficient Frontier, Constraints & Custom Portfolio</h1>
     <div class="topbar-actions">
-      <button type="button" class="btn-top" id="btnTopSave">Gem scenarie</button>
-      <button type="button" class="btn-top" id="btnTopLoad">Hent scenarie</button>
-      <button type="button" class="btn-top" id="btnTopPdf">Udskriv / PDF</button>
-      <button type="button" class="btn-top" id="btnReset">Standardtal</button>
+      <button type="button" class="btn-top" id="btnTopSave" title="Download current inputs and results as a JSON file">Save Scenario</button>
+      <button type="button" class="btn-top" id="btnTopLoad" title="Load a previously saved JSON scenario file">Load Scenario</button>
+      <button type="button" class="btn-top" id="btnTopPdf" title="Open print dialog to print or save as A4 PDF">Print / PDF</button>
+      <button type="button" class="btn-top" id="btnReset" title="Restore the default 5-asset baseline scenario">Reset Defaults</button>
     </div>
   </header>
 
   <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
 
   <main class="app-container">
-    <!-- VENSTRE KOLONNE: Inddata -->
+    <!-- LEFT COLUMN: Inputs -->
     <section class="col-left">
       <div id="errorBanner" class="error-banner"></div>
 
-      <!-- 1. Indstillinger -->
+      <!-- 1. Settings -->
       <div class="card">
-        <h2 class="card-title">Indstillinger</h2>
+        <h2 class="card-title">Settings</h2>
         <div class="form-row">
           <div class="field-inline field-grow">
-            <label for="scenarioName" style="white-space:nowrap;">Scenarienavn:</label>
-            <input type="text" id="scenarioName" value="30-20-20-15-15 Konservativ">
+            <label for="scenarioName" style="white-space:nowrap;">
+              Scenario Name:
+              <button type="button" class="help-badge" data-help="A descriptive title for your portfolio scenario. Used as the header on the chart, PDF report, and exported JSON filename.">?</button>
+            </label>
+            <input type="text" id="scenarioName" value="30-20-20-15-15 Conservative" title="A descriptive title for your portfolio scenario. Used in PDF reports and JSON filenames.">
           </div>
         </div>
         <div class="form-row">
           <div class="field-inline">
-            <label for="numAssets">Antal aktiver:</label>
-            <select id="numAssets" style="width:68px;">
+            <label for="numAssets">
+              Assets:
+              <button type="button" class="help-badge" data-help="Select how many active asset classes (2 to 5) to include in the optimization.">?</button>
+            </label>
+            <select id="numAssets" style="width:68px;" title="Select how many active asset classes (2 to 5) to include in the optimization.">
               <option value="2">2</option>
               <option value="3">3</option>
               <option value="4">4</option>
@@ -616,67 +702,93 @@
             </select>
           </div>
           <div class="field-inline">
-            <label for="rfInput">Risk-free rate (%):</label>
-            <input type="text" id="rfInput" value="3,5" style="width:78px; text-align:right;">
+            <label for="rfInput">
+              Risk-Free Rate (%):
+              <button type="button" class="help-badge" data-help="Annual risk-free yield in percent (e.g., short-term Treasury bills). Defines the y-intercept of the Capital Allocation Line (CAL) and is subtracted from portfolio return when computing the Sharpe Ratio.">?</button>
+            </label>
+            <input type="text" id="rfInput" value="3.5" style="width:78px; text-align:right;" title="Annual risk-free yield in percent (e.g., T-bills). Used to calculate Sharpe Ratios and the Capital Allocation Line.">
           </div>
         </div>
         <label class="check-row">
-          <input type="checkbox" id="allowShort">
-          <span>Tillad shorting (ignorerer min-/maks.-vægte)</span>
+          <input type="checkbox" id="allowShort" title="When enabled, assets can take negative weights (short positions) or exceed 100%, ignoring Min % and Max % limits.">
+          <span>Allow short selling (ignores Min % / Max % bounds)</span>
+          <button type="button" class="help-badge" data-help="When checked, the optimizer ignores your Min % and Max % weight constraints and allows negative weights (short positions) as well as leveraged weights above 100%.">?</button>
         </label>
         <label class="check-row">
-          <input type="checkbox" id="showCustom" checked>
-          <span>Vis egen portefølje på graf og i resultater</span>
+          <input type="checkbox" id="showCustom" checked title="Plot your custom portfolio weights as a blue diamond and compare its metrics against the Tangency Portfolio.">
+          <span>Show custom portfolio on chart and in results</span>
+          <button type="button" class="help-badge" data-help="Plots your manually entered 'Custom %' allocation as a blue diamond on the chart and compares its return, CAGR, volatility, and Sharpe Ratio against the Tangency Portfolio.">?</button>
         </label>
       </div>
 
-      <!-- 2. Aktiver -->
+      <!-- 2. Assets & Constraints -->
       <div class="card">
         <h2 class="card-title">
-          <span>Aktiver, vægtbegrænsninger & egen portefølje (%)</span>
+          <span>Assets, Weight Constraints & Custom Portfolio (%)</span>
         </h2>
         <div class="table-scroll">
           <table class="input-grid">
             <thead>
               <tr>
                 <th>#</th>
-                <th style="width:115px;">Aktivnavn</th>
-                <th>Afkast %</th>
-                <th>Std %</th>
-                <th>Min %</th>
-                <th>Maks %</th>
-                <th>Egen %</th>
+                <th style="width:115px;">
+                  Asset Name
+                  <button type="button" class="help-badge" data-help="Label for the asset class or ticker (e.g., Equities, Gold, TLT). Automatically updates the correlation matrix headers.">?</button>
+                </th>
+                <th>
+                  Return %
+                  <button type="button" class="help-badge" data-help="Expected annual arithmetic return in percent (μ). Note: geometric CAGR is lower due to volatility drag (-½σ²).">?</button>
+                </th>
+                <th>
+                  Std %
+                  <button type="button" class="help-badge" data-help="Expected annualized standard deviation (volatility, σ) in percent. Must be greater than 0. For tail-risk assets like CAT-bonds, consider using an effective stress-tested volatility.">?</button>
+                </th>
+                <th>
+                  Min %
+                  <button type="button" class="help-badge" data-help="Minimum allowed portfolio weight (%) for this asset during optimization (e.g., 0 for long-only). Ignored if short selling is enabled.">?</button>
+                </th>
+                <th>
+                  Max %
+                  <button type="button" class="help-badge" data-help="Maximum allowed portfolio weight (%) for this asset during optimization (e.g., 25 or 100). Ignored if short selling is enabled.">?</button>
+                </th>
+                <th>
+                  Custom %
+                  <button type="button" class="help-badge" data-help="Your own target allocation (%) for comparison. The weights of all active assets must sum to 100.0%.">?</button>
+                </th>
               </tr>
             </thead>
             <tbody id="assetTableBody"></tbody>
           </table>
         </div>
-        <div id="customSumStatus" class="sum-status sum-ok">Sum egen portefølje: 100,0 %</div>
+        <div id="customSumStatus" class="sum-status sum-ok">Custom portfolio sum: 100.0 %</div>
       </div>
 
-      <!-- 3. Korrelationsmatrix -->
+      <!-- 3. Correlation Matrix -->
       <div class="card">
         <h2 class="card-title">
-          <span>Korrelationsmatrix</span>
-          <span class="card-subtitle">-1 til 1 (øvre trekant spejles automatisk)</span>
+          <span>
+            Correlation Matrix
+            <button type="button" class="help-badge" data-help="Pairwise return correlations between -1.0 (perfectly inverse) and +1.0 (identical movement). Edit the upper triangle; the lower triangle mirrors automatically. The matrix must be mathematically valid (positive semi-definite).">?</button>
+          </span>
+          <span class="card-subtitle">-1 to 1 (upper triangle mirrors automatically)</span>
         </h2>
         <div class="table-scroll">
           <table class="corr-grid" id="corrTable"></table>
         </div>
       </div>
 
-      <!-- 4. Knapper -->
+      <!-- 4. Action Buttons -->
       <div class="card action-stack">
-        <button type="button" class="btn-primary" id="btnCalc">Beregn & Optegn</button>
+        <button type="button" class="btn-primary" id="btnCalc" title="Run Mean-Variance Optimization and redraw the Efficient Frontier">Calculate & Plot</button>
         <div class="action-row-3">
-          <button type="button" class="btn-secondary" id="btnSave">Gem (.json)</button>
-          <button type="button" class="btn-secondary" id="btnLoad">Hent (.json)</button>
-          <button type="button" class="btn-secondary" id="btnPdf">Udskriv PDF</button>
+          <button type="button" class="btn-secondary" id="btnSave" title="Save scenario settings and results to a .json file">Save (.json)</button>
+          <button type="button" class="btn-secondary" id="btnLoad" title="Load a saved .json scenario file">Load (.json)</button>
+          <button type="button" class="btn-secondary" id="btnPdf" title="Generate a formatted A4 PDF report">Export PDF</button>
         </div>
       </div>
     </section>
 
-    <!-- HØJRE KOLONNE: Graf & Resultater -->
+    <!-- RIGHT COLUMN: Chart & Results -->
     <section class="col-right">
       <div class="card">
         <h2 class="card-title">
@@ -685,60 +797,135 @@
         </h2>
         <div class="chart-wrapper" id="chartContainer"></div>
         <div class="inspector-bar" id="inspectorBar">
-          <span class="inspector-muted">Tryk på et punkt på kurven eller et aktiv for at aflæse vægte og nøgletal.</span>
+          <span class="inspector-muted">Tap or hover over any point on the curve or an asset marker to inspect weights and metrics.</span>
         </div>
       </div>
 
       <div class="card">
-        <h2 class="card-title">Beregnede porteføljer & optimale vægte</h2>
+        <h2 class="card-title">Calculated Portfolios & Optimal Weights</h2>
         <div class="table-scroll">
           <table class="results-table" id="resultsTable"></table>
         </div>
         <div class="formula-note">
-          CAGR (geometrisk afkast) ≈ μ − ½σ²  | 
-          Rebalanceringsbonus ≈ ½(Σw<sub>i</sub>σ<sub>i</sub>² − σ<sub>p</sub>²).
-          Accepterer både komma og punktum i talfelter.
+          CAGR (geometric return) ≈ μ − ½σ²  | 
+          Rebalancing bonus ≈ ½(Σw<sub>i</sub>σ<sub>i</sub>² − σ<sub>p</sub>²).
+          Both decimal points and commas are accepted in number fields.
         </div>
       </div>
     </section>
   </main>
+
+  <!-- Disclaimer Footer -->
+  <footer class="disclaimer-box">
+    <div class="disclaimer-inner">
+      <strong>Disclaimer — Use at Your Own Risk:</strong> This application is provided strictly for educational, informational, and analytical modeling purposes only and does not constitute financial, investment, tax, or legal advice. Mean-Variance Optimization relies on user-supplied assumptions (expected returns, volatilities, and correlations) that are inherently uncertain and subject to model limitations and tail risk. Past performance is not indicative of future results. You are solely responsible for your own investment decisions, and all use of this software is entirely at your own risk.
+    </div>
+  </footer>
 </div>
 
-<!-- Dedikeret A4 PDF-rapport (vises kun ved udskrivning / Gem som PDF) -->
+<!-- Dedicated A4 Print / PDF Report (visible only when printing) -->
 <div id="print-report"></div>
+
+<!-- Floating Help Tooltip -->
+<div id="floatingTooltip" class="floating-tooltip" role="tooltip"></div>
 
 <script>
 (() => {
   "use strict";
 
   const MAX_ASSETS = 5;
-  const STORAGE_KEY = "mpt_efficient_frontier_state_v3";
+  const STORAGE_KEY = "mpt_efficient_frontier_state_en_v1";
 
   const DEFAULT_STATE = {
-    scenario_name: "30-20-20-15-15 Konservativ",
+    scenario_name: "30-20-20-15-15 Conservative",
     num_assets: 5,
-    rf: "3,5",
+    rf: "3.5",
     allow_short: false,
     show_custom: true,
     assets: [
-      { name: "Aktier",    ret: "9,5", std: "13,98", min_w: "0", max_w: "60", custom_w: "30" },
-      { name: "CAT-bonds", ret: "6,5", std: "9,0",   min_w: "0", max_w: "25", custom_w: "20" },
-      { name: "DBMF",      ret: "7,0", std: "10,45", min_w: "0", max_w: "25", custom_w: "20" },
-      { name: "Guld",      ret: "6,5", std: "16,97", min_w: "0", max_w: "25", custom_w: "15" },
-      { name: "TLT",       ret: "5,0", std: "13,42", min_w: "0", max_w: "25", custom_w: "15" }
+      { name: "Equities",  ret: "9.5", std: "13.98", min_w: "0", max_w: "60", custom_w: "30" },
+      { name: "CAT-bonds", ret: "6.5", std: "9.0",   min_w: "0", max_w: "25", custom_w: "20" },
+      { name: "DBMF",      ret: "7.0", std: "10.45", min_w: "0", max_w: "25", custom_w: "20" },
+      { name: "Gold",      ret: "6.5", std: "16.97", min_w: "0", max_w: "25", custom_w: "15" },
+      { name: "TLT",       ret: "5.0", std: "13.42", min_w: "0", max_w: "25", custom_w: "15" }
     ],
     corr_matrix: [
-      ["1.00",   "0,174",  "0,002",  "0,108", "-0,125"],
-      ["0,174",  "1.00",   "-0,072", "0,078", "0,115"],
-      ["0,002",  "-0,072", "1.00",   "0,215", "0,104"],
-      ["0,108",  "0,078",  "0,215",  "1.00",  "0,230"],
-      ["-0,125", "0,115",  "0,104",  "0,230", "1.00"]
+      ["1.00",   "0.174",  "0.002",  "0.108", "-0.125"],
+      ["0.174",  "1.00",   "-0.072", "0.078", "0.115"],
+      ["0.002",  "-0.072", "1.00",   "0.215", "0.104"],
+      ["0.108",  "0.078",  "0.215",  "1.00",  "0.230"],
+      ["-0.125", "0.115",  "0.104",  "0.230", "1.00"]
     ]
   };
 
   let lastResults = null;
 
-  // --- Hjælpefunktioner ---
+  // --- Tooltip / Help System (Hover on Desktop + Tap on iPad) ---
+  const tooltipEl = document.getElementById("floatingTooltip");
+  let activeHelpBtn = null;
+
+  function showTooltip(targetEl, text) {
+    if (!text) return;
+    tooltipEl.textContent = text;
+    tooltipEl.classList.add("visible");
+
+    const rect = targetEl.getBoundingClientRect();
+    const ttRect = tooltipEl.getBoundingClientRect();
+    const margin = 10;
+
+    let left = rect.left + rect.width / 2 - ttRect.width / 2;
+    left = Math.max(margin, Math.min(window.innerWidth - ttRect.width - margin, left));
+
+    let top = rect.bottom + 8;
+    if (top + ttRect.height > window.innerHeight - margin) {
+      top = Math.max(margin, rect.top - ttRect.height - 8);
+    }
+
+    tooltipEl.style.left = `${left}px`;
+    tooltipEl.style.top = `${top}px`;
+  }
+
+  function hideTooltip() {
+    tooltipEl.classList.remove("visible");
+    activeHelpBtn = null;
+  }
+
+  document.addEventListener("mouseover", (e) => {
+    const badge = e.target.closest(".help-badge");
+    if (badge) {
+      showTooltip(badge, badge.getAttribute("data-help"));
+    }
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    const badge = e.target.closest(".help-badge");
+    if (badge && badge !== activeHelpBtn) {
+      hideTooltip();
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    const badge = e.target.closest(".help-badge");
+    if (badge) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (activeHelpBtn === badge) {
+        hideTooltip();
+      } else {
+        activeHelpBtn = badge;
+        showTooltip(badge, badge.getAttribute("data-help"));
+      }
+      return;
+    }
+    if (activeHelpBtn) {
+      hideTooltip();
+    }
+  });
+
+  window.addEventListener("scroll", hideTooltip, true);
+  window.addEventListener("resize", hideTooltip);
+
+  // --- Helper Functions ---
   function parseNum(str) {
     const cleaned = String(str ?? "").trim().replace(",", ".");
     if (cleaned === "") return NaN;
@@ -762,10 +949,10 @@
 
   function sanitizeFilename(name) {
     const cleaned = String(name || "").trim().replace(/[\\/*?:"<>|]+/g, "_");
-    return cleaned || "MPT_Portefoelje";
+    return cleaned || "MPT_Portfolio";
   }
 
-function escapeHtml(s) {
+  function escapeHtml(s) {
     return String(s)
       .replace(/&/g, "\u0026amp;")
       .replace(/</g, "\u0026lt;")
@@ -791,7 +978,7 @@ function escapeHtml(s) {
     return s;
   }
 
-  // --- Lineær algebra (Gaussian elimination + Jacobi egenværdier) ---
+  // --- Linear Algebra (Gaussian elimination + Jacobi eigenvalues) ---
   function solveLinearSystem(A, b) {
     const n = b.length;
     const M = A.map((row, i) => [...row, b[i]]);
@@ -873,7 +1060,7 @@ function escapeHtml(s) {
     return A.map((r, i) => r[i]);
   }
 
-  // --- Eksakt Box-Constrained QP via Active-Set Enumeration (n <= 5 -> max 3^5 = 243) ---
+  // --- Exact Box-Constrained QP via Active-Set Enumeration (n <= 5 -> max 3^5 = 243) ---
   function solveLinearBox(mu, minW, maxW, maximize) {
     const n = mu.length;
     const w = [...minW];
@@ -954,7 +1141,6 @@ function escapeHtml(s) {
           if (val > maxMuF) maxMuF = val;
         }
         if (maxMuF - minMuF < 1e-11) {
-          // Alle frie aktiver har samme afkast -> afkastkravet er enten opfyldt eller umuligt
           if (Math.abs(mu[freeIdx[0]] * remSum - remRet) > 1e-7) continue;
           effM = 1;
         } else {
@@ -1008,7 +1194,6 @@ function escapeHtml(s) {
         solFree = sol.slice(0, k);
       }
 
-      // Tjek grænser
       let feasible = true;
       for (let a = 0; a < k; a++) {
         const idx = freeIdx[a];
@@ -1035,7 +1220,7 @@ function escapeHtml(s) {
     return bestW;
   }
 
-  // --- MPT Beregningsmotor ---
+  // --- MPT Optimization Engine ---
   function runMPT(inp) {
     const { n, rets: mu, stds, cov, rf, allowShort } = inp;
     const minW = allowShort ? new Array(n).fill(-5.0) : inp.minWs;
@@ -1055,10 +1240,10 @@ function escapeHtml(s) {
 
     // 1. GMVP
     const wGmvp = solveBoxQP(cov, mu, minW, maxW, null);
-    if (!wGmvp) throw new Error("Kunne ikke finde Minimum Variance Portfolio inden for grænserne.");
+    if (!wGmvp) throw new Error("Unable to find a Minimum Variance Portfolio within the specified bounds.");
     const gmvp = portStats(wGmvp);
 
-    // 2. Feasible afkastspænd
+    // 2. Feasible return range
     const minRetSol = solveLinearBox(mu, minW, maxW, false);
     const maxRetSol = solveLinearBox(mu, minW, maxW, true);
     const rMinFeas = minRetSol.ret;
@@ -1076,7 +1261,6 @@ function escapeHtml(s) {
     considerTan(maxRetSol.weights);
     considerTan(minRetSol.weights);
 
-    // Tjek lukket ubegrænset løsning først (hurtig & eksakt hvis inden for grænser)
     const excess = mu.map(r => r - rf);
     const covReg = cov.map((row, i) => row.map((v, j) => v + (i === j ? 1e-13 : 0)));
     const z = solveLinearSystem(covReg, excess);
@@ -1092,7 +1276,6 @@ function escapeHtml(s) {
 
     if (rMaxFeas > rf + 1e-9) {
       const lowR = Math.max(gmvp.ret, rf + 1e-7);
-      // Hvis shorting er slået til, kan rMaxFeas være ekstremt stort; skan både realistisk og fuldt spænd
       const maxAssetRet = Math.max(...mu);
       const scanRanges = allowShort
         ? [[lowR, Math.min(rMaxFeas, Math.max(maxAssetRet * 2.5, lowR + 0.35))], [lowR, rMaxFeas]]
@@ -1119,7 +1302,6 @@ function escapeHtml(s) {
           }
         }
 
-        // Golden-section search til ~1e-11 præcision
         let a = gridR[Math.max(0, bestIdx - 1)];
         let b = gridR[Math.min(steps, bestIdx + 1)];
         const phi = (Math.sqrt(5) - 1) / 2;
@@ -1155,7 +1337,6 @@ function escapeHtml(s) {
         evalAt(0.5 * (a + b));
       }
     } else {
-      // Degenereret tilfælde: alle tilladte afkast <= rf
       const steps = 40;
       for (let s = 0; s <= steps; s++) {
         const r = rMinFeas + (rMaxFeas - rMinFeas) * (s / steps);
@@ -1163,10 +1344,10 @@ function escapeHtml(s) {
       }
     }
 
-    if (!bestTan) throw new Error("Kunne ikke finde en optimal Tangency Portfolio.");
+    if (!bestTan) throw new Error("Unable to find an optimal Tangency Portfolio.");
     const tangency = bestTan;
 
-    // 4. Efficient Frontier (øvre + nedre gren)
+    // 4. Efficient Frontier (upper + lower branch)
     let rPlotMin = rMinFeas;
     let rPlotMax = rMaxFeas;
     if (allowShort) {
@@ -1188,7 +1369,7 @@ function escapeHtml(s) {
     const efUpper = traceBranch(gmvp.ret, rPlotMax, 68);
     const efLower = traceBranch(gmvp.ret, rPlotMin, 30);
 
-    // 5. Egen portefølje
+    // 5. Custom Portfolio
     let custom = null;
     if (inp.showCustom) {
       custom = portStats(inp.customWs);
@@ -1199,7 +1380,7 @@ function escapeHtml(s) {
     return { inputs: inp, tangency, gmvp, custom, efUpper, efLower };
   }
 
-  // --- UI Opbygning ---
+  // --- Build Input Tables ---
   const assetTbody = document.getElementById("assetTableBody");
   const corrTable = document.getElementById("corrTable");
   const assetInputs = [];
@@ -1208,7 +1389,6 @@ function escapeHtml(s) {
   const corrRowHeaders = [];
 
   function buildInputTables() {
-    // Aktivtabel
     for (let i = 0; i < MAX_ASSETS; i++) {
       const tr = document.createElement("tr");
       tr.id = `asset-row-${i}`;
@@ -1219,12 +1399,12 @@ function escapeHtml(s) {
       tr.appendChild(tdTag);
 
       const cols = [
-        { key: "name",     num: false, mode: "text" },
-        { key: "ret",      num: true,  mode: "text" },      // kan være negativ
-        { key: "std",      num: true,  mode: "decimal" },
-        { key: "min_w",    num: true,  mode: "text" },
-        { key: "max_w",    num: true,  mode: "decimal" },
-        { key: "custom_w", num: true,  mode: "decimal" }
+        { key: "name",     num: false, mode: "text",    tip: `Asset ${i + 1}: Name or ticker label` },
+        { key: "ret",      num: true,  mode: "text",    tip: `Asset ${i + 1}: Expected annual arithmetic return (%)` },
+        { key: "std",      num: true,  mode: "decimal", tip: `Asset ${i + 1}: Expected annualized standard deviation / volatility (%)` },
+        { key: "min_w",    num: true,  mode: "text",    tip: `Asset ${i + 1}: Minimum allowed portfolio weight (%)` },
+        { key: "max_w",    num: true,  mode: "decimal", tip: `Asset ${i + 1}: Maximum allowed portfolio weight (%)` },
+        { key: "custom_w", num: true,  mode: "decimal", tip: `Asset ${i + 1}: Weight (%) in your custom portfolio` }
       ];
 
       const rowRefs = { tr };
@@ -1233,6 +1413,7 @@ function escapeHtml(s) {
         const inp = document.createElement("input");
         inp.type = "text";
         inp.setAttribute("inputmode", col.mode);
+        inp.title = col.tip;
         inp.autocomplete = "off";
         inp.spellcheck = false;
         if (col.num) inp.className = "num";
@@ -1264,7 +1445,7 @@ function escapeHtml(s) {
       assetInputs.push(rowRefs);
     }
 
-    // Korrelationstabel
+    // Correlation Table
     const thead = document.createElement("thead");
     const htr = document.createElement("tr");
     htr.appendChild(document.createElement("th"));
@@ -1290,7 +1471,7 @@ function escapeHtml(s) {
         const td = document.createElement("td");
         const inp = document.createElement("input");
         inp.type = "text";
-        inp.setAttribute("inputmode", "text"); // skal tillade minus-tegn på iPad
+        inp.setAttribute("inputmode", "text");
         inp.autocomplete = "off";
         inp.spellcheck = false;
 
@@ -1298,9 +1479,12 @@ function escapeHtml(s) {
           inp.value = "1.00";
           inp.disabled = true;
           inp.className = "diag";
+          inp.title = "Self-correlation is always 1.00";
         } else if (i > j) {
           inp.disabled = true;
+          inp.title = "Mirrored automatically from the upper triangle";
         } else {
+          inp.title = `Pairwise correlation between A${i + 1} and A${j + 1} (-1 to 1)`;
           inp.addEventListener("input", () => {
             corrInputs[j][i].value = inp.value;
             persistLocalState();
@@ -1326,6 +1510,13 @@ function escapeHtml(s) {
       corrColHeaders[i].textContent = shortNm;
       corrRowHeaders[i].textContent = shortNm;
     }
+    for (let i = 0; i < MAX_ASSETS; i++) {
+      const n1 = assetInputs[i].name.value.trim() || `A${i + 1}`;
+      for (let j = i + 1; j < MAX_ASSETS; j++) {
+        const n2 = assetInputs[j].name.value.trim() || `A${j + 1}`;
+        corrInputs[i][j].title = `Correlation between ${n1} and ${n2} (-1 to 1)`;
+      }
+    }
   }
 
   function updateCustomSum() {
@@ -1336,14 +1527,14 @@ function escapeHtml(s) {
       const raw = assetInputs[i].custom_w.value.trim();
       const val = raw === "" ? 0 : parseNum(raw);
       if (Number.isNaN(val)) {
-        el.textContent = "Sum egen portefølje: ugyldigt tal";
+        el.textContent = "Custom portfolio sum: invalid number";
         el.className = "sum-status sum-bad";
         return;
       }
       sum += val;
     }
     const ok = Math.abs(sum - 100.0) < 0.05;
-    el.textContent = `Sum egen portefølje: ${sum.toFixed(1).replace(".", ",")} %`;
+    el.textContent = `Custom portfolio sum: ${sum.toFixed(1)} %`;
     el.className = "sum-status " + (ok ? "sum-ok" : "sum-bad");
   }
 
@@ -1390,9 +1581,9 @@ function escapeHtml(s) {
 
   function applyFormState(data) {
     const n = Math.min(MAX_ASSETS, Math.max(2, Number(data.num_assets || 5)));
-    document.getElementById("scenarioName").value = data.scenario_name ?? "Unavngivet scenarie";
+    document.getElementById("scenarioName").value = data.scenario_name ?? "Untitled Scenario";
     document.getElementById("numAssets").value = String(n);
-    document.getElementById("rfInput").value = String(data.rf ?? "3,5");
+    document.getElementById("rfInput").value = String(data.rf ?? "3.5");
     document.getElementById("allowShort").checked = Boolean(data.allow_short);
     document.getElementById("showCustom").checked = data.show_custom !== undefined ? Boolean(data.show_custom) : true;
 
@@ -1412,11 +1603,10 @@ function escapeHtml(s) {
         } else if (cm[i] && cm[i][j] !== undefined) {
           corrInputs[i][j].value = String(cm[i][j]);
         } else {
-          corrInputs[i][j].value = "0,000";
+          corrInputs[i][j].value = "0.000";
         }
       }
     }
-    // Sikr symmetri fra øvre trekant
     for (let i = 0; i < MAX_ASSETS; i++) {
       for (let j = i + 1; j < MAX_ASSETS; j++) {
         corrInputs[j][i].value = corrInputs[i][j].value;
@@ -1436,17 +1626,17 @@ function escapeHtml(s) {
   function readAndValidateInputs() {
     const n = Number(document.getElementById("numAssets").value);
     const rfVal = parseNum(document.getElementById("rfInput").value);
-    if (Number.isNaN(rfVal)) throw new Error("Risk-free rate skal være et gyldigt tal.");
+    if (Number.isNaN(rfVal)) throw new Error("Risk-free rate must be a valid number.");
     const rf = rfVal / 100.0;
 
     const allowShort = document.getElementById("allowShort").checked;
     const showCustom = document.getElementById("showCustom").checked;
-    const scenarioName = document.getElementById("scenarioName").value.trim() || "Unavngivet scenarie";
+    const scenarioName = document.getElementById("scenarioName").value.trim() || "Untitled Scenario";
 
     const names = [], rets = [], stds = [], minWs = [], maxWs = [], customWs = [];
     for (let i = 0; i < n; i++) {
       const r = assetInputs[i];
-      const name = r.name.value.trim() || `Aktiv ${i + 1}`;
+      const name = r.name.value.trim() || `Asset ${i + 1}`;
       const ret = parseNum(r.ret.value) / 100.0;
       const std = parseNum(r.std.value) / 100.0;
       const minW = parseNum(r.min_w.value) / 100.0;
@@ -1455,13 +1645,13 @@ function escapeHtml(s) {
       const customW = (cRaw === "" ? 0 : parseNum(cRaw)) / 100.0;
 
       if ([ret, std, minW, maxW, customW].some(Number.isNaN)) {
-        throw new Error(`Ugyldig talværdi i række A${i + 1} (${name}).`);
+        throw new Error(`Invalid numeric value in row A${i + 1} (${name}).`);
       }
       if (std <= 0) {
-        throw new Error(`Standardafvigelsen for ${name} skal være større end 0.`);
+        throw new Error(`Standard deviation for ${name} must be greater than 0.`);
       }
       if (!allowShort && minW > maxW) {
-        throw new Error(`Min % er større end Maks % for ${name}.`);
+        throw new Error(`Min % is greater than Max % for ${name}.`);
       }
 
       names.push(name);
@@ -1475,14 +1665,14 @@ function escapeHtml(s) {
     if (!allowShort) {
       const sumMin = minWs.reduce((a, b) => a + b, 0);
       const sumMax = maxWs.reduce((a, b) => a + b, 0);
-      if (sumMin > 1.0 + 1e-6) throw new Error("Summen af Min % må ikke overstige 100 %.");
-      if (sumMax < 1.0 - 1e-6) throw new Error("Summen af Maks % skal være mindst 100 %.");
+      if (sumMin > 1.0 + 1e-6) throw new Error("The sum of Min % cannot exceed 100%.");
+      if (sumMax < 1.0 - 1e-6) throw new Error("The sum of Max % must be at least 100%.");
     }
 
     if (showCustom) {
       const sumCus = customWs.reduce((a, b) => a + b, 0);
       if (Math.abs(sumCus - 1.0) > 1e-3) {
-        throw new Error(`Summen af 'Egen %' skal være 100 % (er nu ${(sumCus * 100).toFixed(1)} %).`);
+        throw new Error(`The sum of 'Custom %' must equal 100% (currently ${(sumCus * 100).toFixed(1)}%).`);
       }
     }
 
@@ -1493,10 +1683,10 @@ function escapeHtml(s) {
       for (let j = i + 1; j < n; j++) {
         const cVal = parseNum(corrInputs[i][j].value);
         if (Number.isNaN(cVal)) {
-          throw new Error(`Ugyldig korrelation mellem ${names[i]} og ${names[j]}.`);
+          throw new Error(`Invalid correlation between ${names[i]} and ${names[j]}.`);
         }
         if (cVal < -1.0 || cVal > 1.0) {
-          throw new Error(`Korrelationen mellem ${names[i]} og ${names[j]} skal ligge mellem -1 og 1.`);
+          throw new Error(`Correlation between ${names[i]} and ${names[j]} must be between -1 and 1.`);
         }
         corr[i][j] = cVal;
         corr[j][i] = cVal;
@@ -1506,8 +1696,8 @@ function escapeHtml(s) {
     const eigvals = symmetricEigenvalues(corr);
     if (Math.min(...eigvals) < -1e-6) {
       throw new Error(
-        "Korrelationsmatricen er ikke matematisk konsistent (ikke positiv semidefinit). " +
-        "Tjek om de indtastede korrelationer modsiger hinanden."
+        "The correlation matrix is not mathematically consistent (not positive semi-definite). " +
+        "Please check whether the entered correlations contradict each other."
       );
     }
 
@@ -1521,7 +1711,7 @@ function escapeHtml(s) {
     };
   }
 
-  // --- SVG Graf (Skarp på iPad Retina & A4 PDF) ---
+  // --- SVG Chart ---
   function niceTicks(minVal, maxVal, approxCount = 6) {
     const span = Math.max(maxVal - minVal, 1e-6);
     const roughStep = span / approxCount;
@@ -1587,11 +1777,9 @@ function escapeHtml(s) {
       </marker>
     </defs>`);
 
-    // Baggrund + ramme
     parts.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="#ffffff"/>`);
     parts.push(`<rect x="${pad.left}" y="${pad.top}" width="${plotW}" height="${plotH}" fill="#fcfdff" stroke="#c8d1dc" stroke-width="1"/>`);
 
-    // Grid & ticks
     for (const xt of xTicks) {
       const px = sx(xt);
       if (px < pad.left - 1 || px > pad.left + plotW + 1) continue;
@@ -1605,13 +1793,10 @@ function escapeHtml(s) {
       parts.push(`<text x="${pad.left - 9}" y="${(py + 4).toFixed(1)}" text-anchor="end" font-size="11.5" fill="#3a4554">${Number.isInteger(yt) ? yt : yt.toFixed(1)}</text>`);
     }
 
-    // Aksetitler
     parts.push(`<text x="${pad.left + plotW / 2}" y="${H - 12}" text-anchor="middle" font-size="13" font-weight="700" fill="#1c2430">Standard Deviation (%)</text>`);
     parts.push(`<text x="18" y="${pad.top + plotH / 2}" text-anchor="middle" font-size="13" font-weight="700" fill="#1c2430" transform="rotate(-90 18 ${pad.top + plotH / 2})">Expected Return (%)</text>`);
 
     const clipId = `url(#plotClip${interactive ? "Scr" : "Prt"})`;
-
-    // Klippet graf-indhold
     parts.push(`<g clip-path="${clipId}">`);
 
     // Best possible CAL
@@ -1619,19 +1804,19 @@ function escapeHtml(s) {
     const calY2 = rfPct + tan.sharpe * calX2;
     parts.push(`<line x1="${sx(0).toFixed(1)}" y1="${sy(rfPct).toFixed(1)}" x2="${sx(calX2).toFixed(1)}" y2="${sy(calY2).toFixed(1)}" stroke="#111827" stroke-width="1.6"/>`);
 
-    // Ineffektiv gren
+    // Inefficient frontier
     if (efLower.length > 1) {
       const dLo = efLower.map((p, idx) => `${idx === 0 ? "M" : "L"}${sx(p.std * 100).toFixed(1)},${sy(p.ret * 100).toFixed(1)}`).join(" ");
       parts.push(`<path d="${dLo}" fill="none" stroke="#9aa3ae" stroke-width="1.5"/>`);
     }
 
-    // Effektiv gren
+    // Efficient frontier
     if (efUpper.length > 1) {
       const dUp = efUpper.map((p, idx) => `${idx === 0 ? "M" : "L"}${sx(p.std * 100).toFixed(1)},${sy(p.ret * 100).toFixed(1)}`).join(" ");
       parts.push(`<path d="${dUp}" fill="none" stroke="#111827" stroke-width="2.6"/>`);
     }
 
-    // Interaktive usynlige klik-mål langs Efficient Frontier
+    // Interactive hit points along Efficient Frontier
     if (interactive && efUpper.length > 2) {
       for (let i = 0; i < efUpper.length; i += 2) {
         const p = efUpper[i];
@@ -1639,7 +1824,7 @@ function escapeHtml(s) {
       }
     }
 
-    // CAL-pil & tekst
+    // CAL Arrow & Label
     const calMidX = Math.max(tan.std * 100 * 0.48, maxX * 0.13);
     const calMidY = rfPct + tan.sharpe * calMidX;
     const calPx = sx(calMidX);
@@ -1651,7 +1836,7 @@ function escapeHtml(s) {
       parts.push(`<text x="${calPx.toFixed(1)}" y="${(lblPy + 2).toFixed(1)}" text-anchor="middle" font-size="11" fill="#1c2430">Best possible CAL</text>`);
     }
 
-    // Efficient Frontier etiket
+    // Efficient Frontier Label
     if (efUpper.length > 6) {
       const idx = Math.floor(efUpper.length * 0.68);
       const epx = Math.min(pad.left + plotW - 105, sx(efUpper[idx].std * 100) + 10);
@@ -1660,7 +1845,7 @@ function escapeHtml(s) {
       parts.push(`<text x="${epx.toFixed(1)}" y="${epy.toFixed(1)}" font-size="11.5" font-weight="700" fill="#111827">Efficient Frontier</text>`);
     }
 
-    // Enkeltaktiver
+    // Individual Assets
     for (let i = 0; i < inp.n; i++) {
       const px = sx(assetStds[i]);
       const py = sy(assetRets[i]);
@@ -1671,12 +1856,12 @@ function escapeHtml(s) {
       const approxW = Math.max(36, inp.names[i].length * 6.8 + 8);
       const rx = alignRight ? tx - approxW + 2 : tx - 3;
 
-      parts.push(`<rect x="${rx.toFixed(1)}" y="${(py - 11).toFixed(1)}" width="${approxW.toFixed(1)}" height="16" rx="3" fill="white" fill-opacity="0.80"/>`);
-      parts.push(`<text x="${tx.toFixed(1)}" y="${(py + 1).toFixed(1)}" text-anchor="${anchor}" font-size="11.5" fill="#1c2430">${nm}</text>`);
+      parts.push(`<rect x="${rx.toFixed(1)}" y="${(py - 8).toFixed(1)}" width="${approxW.toFixed(1)}" height="16" rx="3" fill="white" fill-opacity="0.82"/>`);
+      parts.push(`<text x="${tx.toFixed(1)}" y="${(py + 4).toFixed(1)}" text-anchor="${anchor}" font-size="11.5" fill="#1c2430">${nm}</text>`);
       parts.push(`<circle class="pt-hit" data-kind="asset" data-idx="${i}" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="5.5" fill="#d49b1a" stroke="#111827" stroke-width="1.2" style="${interactive ? "cursor:pointer;" : ""}"/>`);
     }
 
-    // Risikofri rente prik + label
+    // Risk-free rate point + label
     const rfPx = sx(0);
     const rfPy = sy(rfPct);
     parts.push(`<circle cx="${rfPx.toFixed(1)}" cy="${rfPy.toFixed(1)}" r="4.5" fill="#111827"/>`);
@@ -1697,19 +1882,19 @@ function escapeHtml(s) {
     parts.push(`<text x="${tLblX.toFixed(1)}" y="${(tLblY + 13).toFixed(1)}" text-anchor="${tAnchor}" font-size="11" font-weight="700" fill="#b91c1c">(SR: ${tan.sharpe.toFixed(2)})</text>`);
     parts.push(`<circle class="pt-hit" data-kind="tangency" cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="6.8" fill="#d62728" stroke="#111827" stroke-width="1.3" style="${interactive ? "cursor:pointer;" : ""}"/>`);
 
-    // Egen portefølje (blå rombe)
+    // Custom Portfolio (blue diamond)
     if (cus) {
       const cx = sx(cus.std * 100);
       const cy = sy(cus.ret * 100);
-      const placeRight = cx < pad.left + plotW - 140;
+      const placeRight = cx < pad.left + plotW - 145;
       const cLblX = placeRight ? cx + 14 : cx - 14;
-      const cLblY = Math.min(pad.top + plotH - 22, cy + 26);
+      const cLblY = Math.min(pad.top + plotH - 22, cy + 28);
       const cAnchor = placeRight ? "start" : "end";
-      const cBoxX = placeRight ? cLblX - 4 : cLblX - 104;
+      const cBoxX = placeRight ? cLblX - 4 : cLblX - 108;
 
       parts.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${(placeRight ? cLblX - 4 : cLblX + 4).toFixed(1)}" y2="${(cLblY - 4).toFixed(1)}" stroke="#0072bd" stroke-width="1"/>`);
-      parts.push(`<rect x="${cBoxX.toFixed(1)}" y="${(cLblY - 13).toFixed(1)}" width="108" height="30" rx="4" fill="white" fill-opacity="0.88"/>`);
-      parts.push(`<text x="${cLblX.toFixed(1)}" y="${(cLblY - 1).toFixed(1)}" text-anchor="${cAnchor}" font-size="11.5" font-weight="700" fill="#004d80">Egen portefølje</text>`);
+      parts.push(`<rect x="${cBoxX.toFixed(1)}" y="${(cLblY - 13).toFixed(1)}" width="112" height="30" rx="4" fill="white" fill-opacity="0.88"/>`);
+      parts.push(`<text x="${cLblX.toFixed(1)}" y="${(cLblY - 1).toFixed(1)}" text-anchor="${cAnchor}" font-size="11.5" font-weight="700" fill="#004d80">Custom Portfolio</text>`);
       parts.push(`<text x="${cLblX.toFixed(1)}" y="${(cLblY + 13).toFixed(1)}" text-anchor="${cAnchor}" font-size="11" font-weight="700" fill="#004d80">(SR: ${cus.sharpe.toFixed(2)})</text>`);
 
       const dSize = 7.5;
@@ -1719,9 +1904,9 @@ function escapeHtml(s) {
 
     parts.push(`</g>`);
 
-    // Signaturforklaring (nederst til højre)
+    // Legend (bottom right)
     const legH = cus ? 82 : 64;
-    const legW = 148;
+    const legW = 152;
     const legX = pad.left + plotW - legW - 10;
     const legY = pad.top + plotH - legH - 10;
     parts.push(`<g>`);
@@ -1738,7 +1923,7 @@ function escapeHtml(s) {
     if (cus) {
       const dx = legX + 19, dy = legY + 70, ds = 5.5;
       parts.push(`<polygon points="${dx},${dy - ds} ${dx + ds},${dy} ${dx},${dy + ds} ${dx - ds},${dy}" fill="#0072bd" stroke="#111827" stroke-width="1"/>`);
-      parts.push(`<text x="${legX + 35}" y="${legY + 74}" font-size="11" fill="#1c2430">Egen portefølje</text>`);
+      parts.push(`<text x="${legX + 35}" y="${legY + 74}" font-size="11" fill="#1c2430">Custom Portfolio</text>`);
     }
     parts.push(`</g>`);
 
@@ -1759,7 +1944,7 @@ function escapeHtml(s) {
     bar.innerHTML = `
       <div><strong>${escapeHtml(label)}</strong></div>
       <div>
-        Afkast: <strong>${fmt(stats.ret * 100)}%</strong>  | 
+        Return: <strong>${fmt(stats.ret * 100)}%</strong>  | 
         CAGR: <strong>${fmt(stats.cagr * 100)}%</strong>  | 
         Std: <strong>${fmt(stats.std * 100)}%</strong>  | 
         Sharpe: <strong>${fmt(stats.sharpe, 3)}</strong>
@@ -1779,15 +1964,15 @@ function escapeHtml(s) {
         if (kind === "tangency") {
           showInspector("Tangency Portfolio (Max Sharpe)", tan, inp.names);
         } else if (kind === "custom" && cus) {
-          showInspector("Egen portefølje", cus, inp.names);
+          showInspector("Custom Portfolio", cus, inp.names);
         } else if (kind === "ef" && efUpper[idx]) {
-          showInspector("Efficient Frontier-punkt", efUpper[idx], inp.names);
+          showInspector("Efficient Frontier Point", efUpper[idx], inp.names);
         } else if (kind === "asset") {
           const r = inp.rets[idx];
           const s = inp.stds[idx];
           const sr = (r - inp.rf) / s;
           const cagr = r - 0.5 * s * s;
-          showInspector(`Enkeltaktiv: ${inp.names[idx]}`, { ret: r, cagr, std: s, sharpe: sr }, inp.names);
+          showInspector(`Single Asset: ${inp.names[idx]}`, { ret: r, cagr, std: s, sharpe: sr }, inp.names);
         }
       };
       el.addEventListener("click", handler);
@@ -1795,49 +1980,55 @@ function escapeHtml(s) {
     });
   }
 
-  // --- Resultattabel på skærm ---
+  // --- On-Screen Results Table ---
   function renderResultsTable(res) {
     const { inputs: inp, tangency: tan, custom: cus, gmvp } = res;
     const tbl = document.getElementById("resultsTable");
 
     const cols = cus
-      ? ["Nøgletal / Aktivvægt", "Tangency (Max Sharpe)", "Egen portefølje", "Min. Varians (GMVP)"]
-      : ["Nøgletal / Aktivvægt", "Tangency (Max Sharpe)", "Min. Varians (GMVP)"];
+      ? ["Metric / Asset Weight", "Tangency (Max Sharpe)", "Custom Portfolio", "Min. Variance (GMVP)"]
+      : ["Metric / Asset Weight", "Tangency (Max Sharpe)", "Min. Variance (GMVP)"];
 
     const rows = [
       {
-        label: "Forventet afkast (arit.)",
+        label: "Expected Return (arith.)",
+        tip: "Weighted arithmetic mean return per year (μₚ).",
         vals: cus
           ? [`${fmt(tan.ret * 100)} %`, `${fmt(cus.ret * 100)} %`, `${fmt(gmvp.ret * 100)} %`]
           : [`${fmt(tan.ret * 100)} %`, `${fmt(gmvp.ret * 100)} %`]
       },
       {
-        label: "Forventet CAGR (geom.)",
+        label: "Expected CAGR (geom.)",
+        tip: "Estimated compound annual growth rate after volatility drag (μₚ - ½σₚ²).",
         hl: true,
         vals: cus
           ? [`${fmt(tan.cagr * 100)} %`, `${fmt(cus.cagr * 100)} %`, `${fmt(gmvp.cagr * 100)} %`]
           : [`${fmt(tan.cagr * 100)} %`, `${fmt(gmvp.cagr * 100)} %`]
       },
       {
-        label: "Volatility drag",
+        label: "Volatility Drag",
+        tip: "Compounding return reduction caused by portfolio variance (-½σₚ²).",
         vals: cus
           ? [`${fmtSigned(-tan.volDrag * 100)} %`, `${fmtSigned(-cus.volDrag * 100)} %`, `${fmtSigned(-gmvp.volDrag * 100)} %`]
           : [`${fmtSigned(-tan.volDrag * 100)} %`, `${fmtSigned(-gmvp.volDrag * 100)} %`]
       },
       {
-        label: "Rebalanceringsbonus",
+        label: "Rebalancing Bonus",
+        tip: "Compounding gain from diversification and periodic rebalancing across uncorrelated assets: ½(Σwᵢσᵢ² - σₚ²).",
         vals: cus
           ? [fmtBonus(tan.rebalBonus), fmtBonus(cus.rebalBonus), fmtBonus(gmvp.rebalBonus)]
           : [fmtBonus(tan.rebalBonus), fmtBonus(gmvp.rebalBonus)]
       },
       {
-        label: "Standardafvigelse",
+        label: "Standard Deviation",
+        tip: "Annualized portfolio volatility (σₚ).",
         vals: cus
           ? [`${fmt(tan.std * 100)} %`, `${fmt(cus.std * 100)} %`, `${fmt(gmvp.std * 100)} %`]
           : [`${fmt(tan.std * 100)} %`, `${fmt(gmvp.std * 100)} %`]
       },
       {
         label: "Sharpe Ratio",
+        tip: "Excess return over the risk-free rate per unit of volatility: (μₚ - Rf) / σₚ.",
         hl: true,
         vals: cus
           ? [fmt(tan.sharpe, 3), `${fmt(cus.sharpe, 3)} (${fmtSigned(cus.sharpeDiff, 3)})`, fmt(gmvp.sharpe, 3)]
@@ -1847,14 +2038,15 @@ function escapeHtml(s) {
 
     if (cus) {
       rows.push({
-        label: "CAL-afkast v/samme risiko",
+        label: "CAL Return at Same Risk",
+        tip: "Theoretical return achievable on the Best Possible Capital Allocation Line at the same standard deviation as your Custom Portfolio.",
         vals: [`${fmt(tan.ret * 100)} %`, `${fmt(cus.calRetSameRisk * 100)} %`, "-"]
       });
     }
 
     inp.names.forEach((nm, i) => {
       rows.push({
-        label: `Vægt: ${nm}`,
+        label: `Weight: ${nm}`,
         sep: i === 0,
         vals: cus
           ? [`${fmt(tan.weights[i] * 100)} %`, `${fmt(cus.weights[i] * 100)} %`, `${fmt(gmvp.weights[i] * 100)} %`]
@@ -1865,21 +2057,23 @@ function escapeHtml(s) {
     const theadHtml = `<thead><tr>${cols.map(c => `<th>${escapeHtml(c)}</th>`).join("")}</tr></thead>`;
     const tbodyHtml = `<tbody>${rows.map(r => {
       const cls = [r.hl ? "hl-row" : "", r.sep ? "section-sep" : ""].filter(Boolean).join(" ");
-      return `<tr${cls ? ` class="${cls}"` : ""}><td>${escapeHtml(r.label)}</td>${r.vals.map(v => `<td>${escapeHtml(v)}</td>`).join("")}</tr>`;
+      const helpBtn = r.tip
+        ? `<button type="button" class="help-badge" data-help="${escapeHtml(r.tip)}">?</button>`
+        : "";
+      return `<tr${cls ? ` class="${cls}"` : ""}><td>${escapeHtml(r.label)}${helpBtn}</td>${r.vals.map(v => `<td>${escapeHtml(v)}</td>`).join("")}</tr>`;
     }).join("")}</tbody>`;
 
     tbl.innerHTML = theadHtml + tbodyHtml;
   }
 
-  // --- Print / A4 PDF Rapport ---
+  // --- Print / A4 PDF Report ---
   function buildPrintReport(res) {
     const { inputs: inp, tangency: tan, custom: cus, gmvp } = res;
     const now = new Date();
     const pad2 = x => String(x).padStart(2, "0");
-    const dateStr = `${pad2(now.getDate())}-${pad2(now.getMonth() + 1)}-${now.getFullYear()} kl. ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
-    const shortStr = inp.allowShort ? "Ja (ubegrænset)" : "Nej (vægtbegrænset)";
+    const dateStr = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())} at ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+    const shortStr = inp.allowShort ? "Yes (unconstrained)" : "No (weight-constrained)";
 
-    // Inddata-tabel
     const inRows = inp.names.map((nm, i) => `
       <tr>
         <td class="left">${escapeHtml(nm.slice(0, 14))}</td>
@@ -1891,7 +2085,6 @@ function escapeHtml(s) {
       </tr>
     `).join("");
 
-    // Korrelationsmatrix
     const shortNames = inp.names.map(nm => nm.slice(0, 7));
     const corrHeader = `<tr><th></th>${shortNames.map(s => `<th>${escapeHtml(s)}</th>`).join("")}</tr>`;
     const corrRows = inp.names.map((_, i) => `
@@ -1901,25 +2094,24 @@ function escapeHtml(s) {
       </tr>
     `).join("");
 
-    // Resultattabel
     const resHead = cus
-      ? `<tr><th>Nøgletal / Aktivvægt</th><th>Tangency (Max Sharpe)</th><th>Egen portefølje</th><th>Min. Varians (GMVP)</th></tr>`
-      : `<tr><th>Nøgletal / Aktivvægt</th><th>Tangency (Max Sharpe)</th><th>Min. Varians (GMVP)</th></tr>`;
+      ? `<tr><th>Metric / Asset Weight</th><th>Tangency (Max Sharpe)</th><th>Custom Portfolio</th><th>Min. Variance (GMVP)</th></tr>`
+      : `<tr><th>Metric / Asset Weight</th><th>Tangency (Max Sharpe)</th><th>Min. Variance (GMVP)</th></tr>`;
 
     const resRowsArr = [
-      { l: "Forventet afkast (arit.)", v: cus ? [`${fmt(tan.ret * 100)} %`, `${fmt(cus.ret * 100)} %`, `${fmt(gmvp.ret * 100)} %`] : [`${fmt(tan.ret * 100)} %`, `${fmt(gmvp.ret * 100)} %`] },
-      { l: "Forventet CAGR (geom.)", hl: true, v: cus ? [`${fmt(tan.cagr * 100)} %`, `${fmt(cus.cagr * 100)} %`, `${fmt(gmvp.cagr * 100)} %`] : [`${fmt(tan.cagr * 100)} %`, `${fmt(gmvp.cagr * 100)} %`] },
-      { l: "Volatility drag", v: cus ? [`${fmtSigned(-tan.volDrag * 100)} %`, `${fmtSigned(-cus.volDrag * 100)} %`, `${fmtSigned(-gmvp.volDrag * 100)} %`] : [`${fmtSigned(-tan.volDrag * 100)} %`, `${fmtSigned(-gmvp.volDrag * 100)} %`] },
-      { l: "Rebalanceringsbonus", v: cus ? [fmtBonus(tan.rebalBonus), fmtBonus(cus.rebalBonus), fmtBonus(gmvp.rebalBonus)] : [fmtBonus(tan.rebalBonus), fmtBonus(gmvp.rebalBonus)] },
-      { l: "Standardafvigelse", v: cus ? [`${fmt(tan.std * 100)} %`, `${fmt(cus.std * 100)} %`, `${fmt(gmvp.std * 100)} %`] : [`${fmt(tan.std * 100)} %`, `${fmt(gmvp.std * 100)} %`] },
+      { l: "Expected Return (arith.)", v: cus ? [`${fmt(tan.ret * 100)} %`, `${fmt(cus.ret * 100)} %`, `${fmt(gmvp.ret * 100)} %`] : [`${fmt(tan.ret * 100)} %`, `${fmt(gmvp.ret * 100)} %`] },
+      { l: "Expected CAGR (geom.)", hl: true, v: cus ? [`${fmt(tan.cagr * 100)} %`, `${fmt(cus.cagr * 100)} %`, `${fmt(gmvp.cagr * 100)} %`] : [`${fmt(tan.cagr * 100)} %`, `${fmt(gmvp.cagr * 100)} %`] },
+      { l: "Volatility Drag", v: cus ? [`${fmtSigned(-tan.volDrag * 100)} %`, `${fmtSigned(-cus.volDrag * 100)} %`, `${fmtSigned(-gmvp.volDrag * 100)} %`] : [`${fmtSigned(-tan.volDrag * 100)} %`, `${fmtSigned(-gmvp.volDrag * 100)} %`] },
+      { l: "Rebalancing Bonus", v: cus ? [fmtBonus(tan.rebalBonus), fmtBonus(cus.rebalBonus), fmtBonus(gmvp.rebalBonus)] : [fmtBonus(tan.rebalBonus), fmtBonus(gmvp.rebalBonus)] },
+      { l: "Standard Deviation", v: cus ? [`${fmt(tan.std * 100)} %`, `${fmt(cus.std * 100)} %`, `${fmt(gmvp.std * 100)} %`] : [`${fmt(tan.std * 100)} %`, `${fmt(gmvp.std * 100)} %`] },
       { l: "Sharpe Ratio", hl: true, v: cus ? [fmt(tan.sharpe, 3), `${fmt(cus.sharpe, 3)} (${fmtSigned(cus.sharpeDiff, 3)})`, fmt(gmvp.sharpe, 3)] : [fmt(tan.sharpe, 3), fmt(gmvp.sharpe, 3)] }
     ];
     if (cus) {
-      resRowsArr.push({ l: "CAL-afkast v/samme risiko", v: [`${fmt(tan.ret * 100)} %`, `${fmt(cus.calRetSameRisk * 100)} %`, "-"] });
+      resRowsArr.push({ l: "CAL Return at Same Risk", v: [`${fmt(tan.ret * 100)} %`, `${fmt(cus.calRetSameRisk * 100)} %`, "-"] });
     }
     inp.names.forEach((nm, i) => {
       resRowsArr.push({
-        l: `Vægt: ${nm}`,
+        l: `Weight: ${nm}`,
         v: cus
           ? [`${fmt(tan.weights[i] * 100)} %`, `${fmt(cus.weights[i] * 100)} %`, `${fmt(gmvp.weights[i] * 100)} %`]
           : [`${fmt(tan.weights[i] * 100)} %`, `${fmt(gmvp.weights[i] * 100)} %`]
@@ -1935,23 +2127,23 @@ function escapeHtml(s) {
 
     document.getElementById("print-report").innerHTML = `
       <div class="pr-header">
-        <h1 class="pr-title">MPT Porteføljerapport — ${escapeHtml(inp.scenarioName)}</h1>
+        <h1 class="pr-title">MPT Portfolio Report — ${escapeHtml(inp.scenarioName)}</h1>
         <p class="pr-meta">
-          Genereret: ${dateStr}  |  Aktiver: ${inp.n}  | 
-          Risikofri rente: ${fmt(inp.rf * 100)} %  |  Shorting: ${shortStr}
+          Generated: ${dateStr}  |  Assets: ${inp.n}  | 
+          Risk-Free Rate: ${fmt(inp.rf * 100)} %  |  Short Selling: ${shortStr}
         </p>
       </div>
       <div class="pr-chart">${buildChartSVG(res, false)}</div>
       <div class="pr-mid-grid">
         <div>
-          <h2 class="pr-sec-title">Inddata & vægtbegrænsninger (%)</h2>
+          <h2 class="pr-sec-title">Inputs & Weight Constraints (%)</h2>
           <table class="pr-table">
-            <thead><tr><th>Aktiv</th><th>Afk. %</th><th>Std %</th><th>Min %</th><th>Maks %</th><th>Egen %</th></tr></thead>
+            <thead><tr><th>Asset</th><th>Ret. %</th><th>Std %</th><th>Min %</th><th>Max %</th><th>Custom %</th></tr></thead>
             <tbody>${inRows}</tbody>
           </table>
         </div>
         <div>
-          <h2 class="pr-sec-title">Korrelationsmatrix</h2>
+          <h2 class="pr-sec-title">Correlation Matrix</h2>
           <table class="pr-table">
             <thead>${corrHeader}</thead>
             <tbody>${corrRows}</tbody>
@@ -1959,20 +2151,20 @@ function escapeHtml(s) {
         </div>
       </div>
       <div>
-        <h2 class="pr-sec-title">Beregnede porteføljer & optimale vægte</h2>
+        <h2 class="pr-sec-title">Calculated Portfolios & Optimal Weights</h2>
         <table class="pr-table">
           <thead>${resHead}</thead>
           <tbody>${resBody}</tbody>
         </table>
       </div>
       <div class="pr-footer">
-        Beregnet med MPT Efficient Frontier-værktøj (Markowitz Mean-Variance).
-        CAGR ≈ μ − ½σ²; Rebalanceringsbonus ≈ ½(Σw<sub>i</sub>σ<sub>i</sub>² − σ<sub>p</sub>²).
+        Computed with MPT Efficient Frontier Optimizer (Markowitz Mean-Variance). CAGR ≈ μ − ½σ²; Rebalancing Bonus ≈ ½(Σw<sub>i</sub>σ<sub>i</sub>² − σ<sub>p</sub>²).<br>
+        <strong>Disclaimer:</strong> For educational and analytical modeling purposes only; does not constitute financial advice. All use is at your own risk.
       </div>
     `;
   }
 
-  // --- Hovedberegning & Rendering ---
+  // --- Main Calculate & Render ---
   function calculateAndRender() {
     const errEl = document.getElementById("errorBanner");
     errEl.style.display = "none";
@@ -1989,16 +2181,16 @@ function escapeHtml(s) {
       renderResultsTable(res);
 
       const bar = document.getElementById("inspectorBar");
-      bar.innerHTML = `<span class="inspector-muted">Tryk på et punkt på kurven eller et aktiv for at aflæse vægte og nøgletal.</span>`;
+      bar.innerHTML = `<span class="inspector-muted">Tap or hover over any point on the curve or an asset marker to inspect weights and metrics.</span>`;
       return true;
     } catch (err) {
-      errEl.textContent = "Fejl i beregning: " + err.message;
+      errEl.textContent = "Calculation Error: " + err.message;
       errEl.style.display = "block";
       return false;
     }
   }
 
-  // --- Gem & Hent JSON (100 % kompatibel med Python-programmet) ---
+  // --- Save & Load JSON ---
   function saveScenarioJSON() {
     if (!calculateAndRender()) return;
     const raw = getRawFormState();
@@ -2075,7 +2267,7 @@ function escapeHtml(s) {
         calculateAndRender();
       } catch (err) {
         const errEl = document.getElementById("errorBanner");
-        errEl.textContent = "Kunne ikke indlæse JSON-fil: " + err.message;
+        errEl.textContent = "Could not load JSON file: " + err.message;
         errEl.style.display = "block";
       }
     };
@@ -2092,7 +2284,7 @@ function escapeHtml(s) {
     setTimeout(() => { document.title = prevTitle; }, 500);
   }
 
-  // --- Initialisering ---
+  // --- Initialization ---
   buildInputTables();
 
   document.getElementById("numAssets").addEventListener("change", () => {
@@ -2124,7 +2316,6 @@ function escapeHtml(s) {
     calculateAndRender();
   });
 
-  // Genvejstaster på PC / iPad med eksternt tastatur
   window.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
       e.preventDefault();
@@ -2138,7 +2329,6 @@ function escapeHtml(s) {
     }
   });
 
-  // Indlæs seneste tilstand eller standardtal
   let initial = DEFAULT_STATE;
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
